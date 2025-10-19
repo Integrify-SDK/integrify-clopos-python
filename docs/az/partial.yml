@@ -1,0 +1,9 @@
+{Replace}:
+  - Ümumi məlumat: "integrations/{replace}/about.md"
+  - Mühit dəyişənləri: "integrations/{replace}/env.md"
+  - API Referansı:
+    - API Klient: "integrations/{replace}/api-reference/client.md"
+    - Schemas:
+      - Response: "integrations/{replace}/api-reference/response.md"
+      - Callback: "integrations/{replace}/api-reference/callback.md"
+    - Köməkçi funksiyalar: "integrations/{replace}/api-reference/helper-functions.md"
