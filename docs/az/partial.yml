@@ -1,9 +1,9 @@
-{Replace}:
-  - Ümumi məlumat: "integrations/{replace}/about.md"
-  - Mühit dəyişənləri: "integrations/{replace}/env.md"
+Clopos:
+  - Ümumi məlumat: "integrations/clopos/about.md"
+  - Mühit dəyişənləri: "integrations/clopos/env.md"
   - API Referansı:
-    - API Klient: "integrations/{replace}/api-reference/client.md"
+    - API Klient: "integrations/clopos/api-reference/client.md"
     - Schemas:
-      - Response: "integrations/{replace}/api-reference/response.md"
-      - Callback: "integrations/{replace}/api-reference/callback.md"
-    - Köməkçi funksiyalar: "integrations/{replace}/api-reference/helper-functions.md"
+      - Response: "integrations/clopos/api-reference/response.md"
+      - Callback: "integrations/clopos/api-reference/callback.md"
+    - Köməkçi funksiyalar: "integrations/clopos/api-reference/helper-functions.md"

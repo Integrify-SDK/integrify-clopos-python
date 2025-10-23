@@ -8,15 +8,14 @@ message: >-
   metadata from this file.
 type: software
 authors:
-  - {replace}
   - given-names: Miradil
     family-names: Zeynalli
     email: miradil.zeynalli@gmail.com
-repository-code: 'https://github.com/Integrify-SDK/integrify-{replace}-python'
+repository-code: 'https://github.com/Integrify-SDK/integrify-clopos-python'
 url: 'https://integrify.mmzeynalli.dev/'
 abstract: >-
   Integrify is a request library that eases the API integrations.
-  This library is for integrating {replace}.
+  This library is for integrating Clopos.
 keywords:
   - integrify
 license: GPL-3.0-or-later

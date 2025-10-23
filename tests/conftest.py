@@ -12,6 +12,6 @@ from tests.mocks import *  # noqa: F403
 
 @pytest.fixture(scope='package')
 def client():
-    from integrify.integration_name.client import ClientClass
+    from integrify.clopos.client import CloposClientClass
 
-    yield ClientClass()
+    yield CloposClientClass()
