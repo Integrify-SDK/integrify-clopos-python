@@ -7,3 +7,4 @@ IsoDateTime = Annotated[
     Union[str, datetime, None],
     Field(BeforeValidator(lambda v: v.isoformat() if isinstance(v, datetime) else v)),
 ]
+"""ISO 8601 date-time format Pydantic field validator."""

@@ -1,7 +1,7 @@
 # Clopos
 
 ???+ warning
-    To use these requests you need to set correct environmental variables. Read more about them [here](./env.md). 
+    To use these requests you need to set correct environmental variables. Read more about them [here](./env.md).
 
 ## Official Documentation (v1.0.1) { #official-documentation }
 

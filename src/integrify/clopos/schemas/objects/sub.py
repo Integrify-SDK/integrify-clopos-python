@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Literal, Union
 
 from pydantic import BaseModel, Field
 
-from integrify.clopos.schemas.enums import ProductType
+from integrify.clopos.schemas.enums import DiscountType, ProductType
 from integrify.utils import UnsetOrNoneField
 
 if TYPE_CHECKING:
@@ -316,11 +316,11 @@ class OrderCustomer(BaseModel):
     address: UnsetOrNoneField[str]
     """The address of the customer"""
 
-    customer_discount_type: UnsetOrNoneField[int]
+    customer_discount_type: UnsetOrNoneField[DiscountType]
     """The discount type of the customer"""
 
 
-class Payload(BaseModel):
+class OrderPayload(BaseModel):
     service: UnsetOrNoneField[Service]
     """The sale type of the order"""
 

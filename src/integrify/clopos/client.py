@@ -1,3 +1,6 @@
+from ctypes import Union
+from datetime import datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
 from integrify.api import APIClient
@@ -10,12 +13,17 @@ from integrify.clopos.handlers import (
     GetByIDHandler,
     GetCategoriesHandler,
     GetCategoryByIDHandler,
+    GetCustomersHandler,
     GetOrderByIDHandler,
     GetOrdersHandler,
     GetPaginatedDataHandler,
     GetProductsHandler,
+    GetReceiptsHandler,
     GetStationsHandler,
+    UpdateOrderHandler,
 )
+from integrify.clopos.schemas.enums import CategoryType, DiscountType, OrderStatus, ProductType
+from integrify.clopos.schemas.objects.input import PaymentMethodIn
 from integrify.clopos.schemas.objects.main import (
     Category,
     Customer,
@@ -29,6 +37,8 @@ from integrify.clopos.schemas.objects.main import (
     User,
     Venue,
 )
+from integrify.clopos.schemas.objects.sub import LineItem
+from integrify.clopos.schemas.request import GetProductsRequest
 from integrify.clopos.schemas.response import (
     AuthResponse,
     BaseResponse,
@@ -36,7 +46,7 @@ from integrify.clopos.schemas.response import (
     ObjectResponse,
 )
 from integrify.schemas import APIResponse
-from integrify.utils import UNSET, Unset
+from integrify.utils import UNSET, Unset, UnsetOrNone
 
 __all__ = ['CloposClientClass', 'CloposRequest', 'CloposAsyncRequest']
 
@@ -66,7 +76,7 @@ class CloposClientClass(APIClient):
         self.add_handler('get_user_by_id', GetByIDHandler(User))
 
         self.add_url('get_customers', env.API.CUSTOMERS, verb='GET')
-        self.add_handler('get_customers', GetPaginatedDataHandler(Customer))
+        self.add_handler('get_customers', GetCustomersHandler)
         self.add_url('get_customer_by_id', env.API.CUSTOMER_BY_ID, verb='GET')
         self.add_handler('get_customer_by_id', GetByIDHandler(Customer))
         self.add_url('get_customer_groups', env.API.CUSTOMER_GROUPS, verb='GET')
@@ -98,15 +108,31 @@ class CloposClientClass(APIClient):
         self.add_handler('get_order_by_id', GetOrderByIDHandler)
         self.add_url('create_order', env.API.ORDERS, verb='POST')
         self.add_handler('create_order', CreateOrderHandler)
+        self.add_url('update_order', env.API.ORDER_BY_ID, verb='PUT')
+        self.add_handler('update_order', UpdateOrderHandler)
 
         self.add_url('get_receipts', env.API.RECEIPTS, verb='GET')
-        self.add_handler('get_receipts', GetPaginatedDataHandler(Receipt))
+        self.add_handler('get_receipts', GetReceiptsHandler)
         self.add_url('get_receipt_by_id', env.API.RECEIPT_BY_ID, verb='GET')
         self.add_handler('get_receipt_by_id', GetByIDHandler(Receipt))
         self.add_url('create_receipt', env.API.RECEIPTS, verb='POST')
         self.add_handler('create_receipt', CreateReceiptHandler)
         self.add_url('delete_receipt', env.API.RECEIPT_BY_ID, verb='DELETE')
         self.add_handler('delete_receipt', DeleteReceiptHandler)
+
+    def _build_request_lambda(self, func, url, verb, handler):
+        # No headers needed in auth
+        if url.endswith(env.API.AUTH):
+            return super()._build_request_lambda(func, url, verb, handler)
+
+        return lambda *args, headers, **kwds: func(
+            url,
+            verb,
+            handler,
+            *(arg for arg in args if arg is not UNSET),
+            headers=headers,
+            **{k: v for k, v in kwds.items() if v is not UNSET},
+        )
 
     if TYPE_CHECKING:
         # pylint: disable=all
@@ -116,144 +142,765 @@ class CloposClientClass(APIClient):
             client_secret: Unset[str] = UNSET,
             brand: Unset[str] = UNSET,
             venue_id: Unset[str] = UNSET,
-        ) -> APIResponse[AuthResponse]: ...
+        ) -> APIResponse[AuthResponse]:
+            """Function for authentication
+
+            **Endpoint**: `POST /open-api/auth`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.auth(
+                client_id='eNUKI04aYJRU6TBhh5bwUrvmEORgQoxM',
+                client_secret='dqYkWUpDjzvKOgbP3ar8tSNKJbwMyYe1V5R7DHClfSNYkap5C5XxRA6PmzoPv1I2',
+                brand='openapitest',
+                venue_id='1'
+            )
+
+            # Or if you have set the environment variables
+            CloposClient.auth(headers={'x-token': token})
+            ```
+
+            **Response format: [`AuthResponse`][integrify.clopos.schemas.response.AuthResponse]**
+
+            This request returns you a token for subsequent API calls which is valid for one hour.
+
+            Args:
+                client_id: Client ID provided by Clopos. Can be set in environment variable `CLOPOS_CLIENT_ID`
+                client_secret: Client secret provided by Clopos. Can be set in environment variable `CLOPOS_CLIENT_SECRET`
+                brand: Brand you want to authenticate. Can be set in environment variable `CLOPOS_BRAND`
+                venue_id: Venue ID you want to authenticate. Can be set in environment variable `CLOPOS_VENUE_ID`
+            """  # noqa: E501
 
         def get_venues(
             self,
             page: Unset[int] = UNSET,
             limit: Unset[int] = UNSET,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectListResponse[Venue]]: ...
+        ) -> APIResponse[ObjectListResponse[Venue]]:
+            """Function for getting list of venues
+
+            **Endpoint**: `GET /open-api/venues`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_venues(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_venues(headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectListResponse[Venue]`][integrify.clopos.schemas.response.ObjectListResponse]**
+
+            Args:
+                page: Page number for pagination (starts at 1)
+                limit: Maximum number of objects to return (1-100)
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_users(
             self,
             page: Unset[int] = UNSET,
             limit: Unset[int] = UNSET,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectListResponse[User]]: ...
+        ) -> APIResponse[ObjectListResponse[User]]:
+            """Function for getting list of users
+
+            **Endpoint**: `GET /open-api/users`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_users(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_users(headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectListResponse[User]`][integrify.clopos.schemas.response.ObjectListResponse]**
+
+            Args:
+                page: Page number for pagination (starts at 1)
+                limit: Maximum number of objects to return (1-100)
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_user_by_id(
             self,
             id: int,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectResponse[User]]: ...
+        ) -> APIResponse[ObjectResponse[User]]:
+            """Function for getting user by id
+
+            **Endpoint**: `GET /open-api/users/{id}`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_user_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_user_by_id(id=1, headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectResponse[User]`][integrify.clopos.schemas.response.ObjectResponse]**
+
+            Args:
+                id: User ID
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_customers(
             self,
-            page: Unset[int] = UNSET,
-            limit: Unset[int] = UNSET,
+            page: Unset[int] = 1,
+            limit: Unset[int] = 20,
+            search: Unset[str] = UNSET,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectListResponse[Customer]]: ...
+        ) -> APIResponse[ObjectListResponse[Customer]]:
+            """Function for getting list of customers
+
+            **Endpoint**: `GET /open-api/customers`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_customers(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_customers(headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectListResponse[Customer]`][integrify.clopos.schemas.response.ObjectListResponse]**
+
+            Args:
+                page: Page number for pagination (starts at 1)
+                limit: Maximum number of objects to return (1-100)
+                search: Search customers by name or email
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_customer_by_id(
             self,
             id: int,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectResponse[Customer]]: ...
+        ) -> APIResponse[ObjectResponse[Customer]]:
+            """Function for getting customer by id
+
+            **Endpoint**: `GET /open-api/customers/{id}`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_customer_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_customer_by_id(id=1, headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectResponse[Customer]`][integrify.clopos.schemas.response.ObjectResponse]**
+
+            Args:
+                id: Customer ID
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_customer_groups(
             self,
             page: Unset[int] = UNSET,
             limit: Unset[int] = UNSET,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectListResponse[Group]]: ...
+        ) -> APIResponse[ObjectListResponse[Group]]:
+            """Function for getting list of customer groups
+
+            **Endpoint**: `GET /open-api/customer-groups`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_customer_groups(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_customer_groups(headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectListResponse[Group]`][integrify.clopos.schemas.response.ObjectListResponse]**
+
+            Args:
+                page: Page number for pagination (starts at 1)
+                limit: Maximum number of objects to return (1-100)
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_categories(
             self,
-            page: Unset[int] = UNSET,
-            limit: Unset[int] = UNSET,
+            page: Unset[int] = 1,
+            limit: Unset[int] = 50,
+            parent_id: Unset[int] = UNSET,
+            type: Unset[CategoryType] = UNSET,
+            include_children: Unset[bool] = True,
+            include_inactive: Unset[bool] = False,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectListResponse[Category]]: ...
+        ) -> APIResponse[ObjectListResponse[Category]]:
+            """Function for getting list of menu categories
+
+            **Endpoint**: `GET /open-api/categories`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_categories(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_categories(headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectListResponse[Category]`][integrify.clopos.schemas.response.ObjectListResponse]**
+
+            Args:
+                page: Page number for pagination (starts at 1)
+                limit: Number of categories to return (1-999)
+                parent_id: Filters records under a specific parent category
+                type: Category type; PRODUCT, INGREDIENT, ACCOUNTING
+                include_children: Include child categories in the response
+                include_inactive: Include inactive categories
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_category_by_id(
             self,
             id: int,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectResponse[Category]]: ...
+        ) -> APIResponse[ObjectResponse[Category]]:
+            """Function for getting menu category by id
+
+            **Endpoint**: `GET /open-api/categories/{id}`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_category_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_category_by_id(id=1, headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectResponse[Category]`][integrify.clopos.schemas.response.ObjectResponse]**
+
+            Args:
+                id: Category ID
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_stations(
             self,
-            page: Unset[int] = UNSET,
-            limit: Unset[int] = UNSET,
+            page: Unset[int] = 1,
+            limit: Unset[int] = 50,
+            status: Unset[int] = UNSET,
+            can_print: Unset[bool] = UNSET,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectListResponse[Station]]: ...
+        ) -> APIResponse[ObjectListResponse[Station]]:
+            """Function for getting list of stations
+
+            **Endpoint**: `GET /open-api/stations`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_stations(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_stations(headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectListResponse[Station]`][integrify.clopos.schemas.response.ObjectListResponse]**
+
+            Args:
+                page: Page number for pagination (starts at 1)
+                limit: Maximum number of objects to return (1-200)
+                status: Filter by station status (`1` = active, `0` = inactive)
+                can_print: Filter stations that can redirect to a printer.
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_station_by_id(
             self,
             id: int,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectResponse[Station]]: ...
+        ) -> APIResponse[ObjectResponse[Station]]:
+            """Function for getting station by id
+
+            **Endpoint**: `GET /open-api/stations/{id}`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_station_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_station_by_id(id=1, headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectResponse[Station]`][integrify.clopos.schemas.response.ObjectResponse]**
+
+            Args:
+                id: Station ID
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_products(
             self,
-            page: Unset[int] = UNSET,
-            limit: Unset[int] = UNSET,
+            page: Unset[int] = 1,
+            limit: Unset[int] = 50,
+            type: Unset[list[ProductType]] = UNSET,
+            category_id: Unset[list[int]] = UNSET,
+            station_id: Unset[list[int]] = UNSET,
+            tags: Unset[list[int]] = UNSET,
+            giftable: Unset[str] = UNSET,
+            discountable: Unset[str] = UNSET,
+            inventory_behavior: Unset[str] = UNSET,
+            have_ingredients: Unset[str] = UNSET,
+            sold_by_portion: Unset[str] = UNSET,
+            has_variants: Unset[str] = UNSET,
+            has_modifiers: Unset[str] = UNSET,
+            has_barcode: Unset[str] = UNSET,
+            has_service_charge: Unset[str] = UNSET,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectListResponse[Product]]: ...
+        ) -> APIResponse[ObjectListResponse[Product]]:
+            """Function for getting list of products
+
+            **Endpoint**: `GET /open-api/products`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_products(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_products(headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectListResponse[Product]`][integrify.clopos.schemas.response.ObjectListResponse]**
+
+            Args:
+                page: Page number for pagination (starts at 1)
+                limit: Maximum number of objects to return (1-100)
+                type: Filters by product type. Possible values: GOODS, DISH, TIMER, PREPARATION, INGREDIENT
+                category_id: Lists products belonging to the specified category IDs
+                station_id: Retrieves products assigned to the specified station IDs
+                tags: Filters for products with the specified tag IDs
+                giftable: Filters for products that are ("1") or are not giftable
+                discountable: Filters for products that are ("1") or are not discountable
+                inventory_behavior: Filters by inventory behavior mode (e.g., "3")
+                have_ingredients: Retrieves products that have a recipe/ingredients ("1")
+                sold_by_portion: Lists products sold by portion ("1")
+                has_variants: Lists products that have variants (modifications) ("1")
+                has_modifiers: Retrieves products that have a modifier group (modificator_groups) ("1")
+                has_barcode: Retrieves products that have a barcode ("1")
+                has_service_charge: Lists products to which a service charge applies ("1")
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_product_by_id(
             self,
             id: int,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectResponse[Product]]: ...
+        ) -> APIResponse[ObjectResponse[Product]]:
+            """Function for getting product by id
+
+            **Endpoint**: `GET /open-api/products/{id}`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_product_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_product_by_id(id=1, headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectResponse[Product]`][integrify.clopos.schemas.response.ObjectResponse]**
+
+            Args:
+                id: Product ID
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_sale_types(
             self,
-            page: Unset[int] = UNSET,
-            limit: Unset[int] = UNSET,
+            page: Unset[int] = 1,
+            limit: Unset[int] = 20,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectListResponse[SaleType]]: ...
+        ) -> APIResponse[ObjectListResponse[SaleType]]:
+            """Function for getting list of sale types
+
+            **Endpoint**: `GET /open-api/sale-types`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_sale_types(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_sale_types(headers={'x-token': token})
+            ```
+
+            Used by:
+                Create Order: provide payload.service.sale_type_id and payload.service.venue_id
+                Create Receipt: optionally include sale_type_id or meta.sale_type
+
+            **Response format: [`ObjectListResponse[SaleType]`][integrify.clopos.schemas.response.ObjectListResponse]**
+
+            Args:
+                page: Page number for pagination (starts at 1)
+                limit: Maximum number of objects to return (1-100)
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_payment_methods(
             self,
-            page: Unset[int] = UNSET,
-            limit: Unset[int] = UNSET,
+            page: Unset[int] = 1,
+            limit: Unset[int] = 20,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectListResponse[PaymentMethod]]: ...
+        ) -> APIResponse[ObjectListResponse[PaymentMethod]]:
+            """Function for getting list of payment methods
+
+            **Endpoint**: `GET /open-api/payment-methods`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_payment_methods(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_payment_methods(headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectListResponse[PaymentMethod]`][integrify.clopos.schemas.response.ObjectListResponse]**
+
+            Args:
+                page: Page number for pagination (starts at 1)
+                limit: Maximum number of objects to return (1-100)
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_orders(
             self,
-            page: Unset[int] = UNSET,
-            limit: Unset[int] = UNSET,
+            page: Unset[int] = 1,
+            limit: Unset[int] = 20,
+            status: Unset[OrderStatus] = UNSET,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectListResponse[Order]]: ...
+        ) -> APIResponse[ObjectListResponse[Order]]:
+            """Function for getting list of orders
+
+            **Endpoint**: `GET /open-api/orders`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_orders(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_orders(headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectListResponse[Order]`][integrify.clopos.schemas.response.ObjectListResponse]**
+
+            Args:
+                page: Page number for pagination (starts at 1)
+                limit: Maximum number of objects to return (1-100)
+                status: Filter by order status
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_order_by_id(
             self,
             id: int,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectResponse[Order]]: ...
+        ) -> APIResponse[ObjectResponse[Order]]:
+            """Function for getting order by id
+
+            **Endpoint**: `GET /open-api/orders/{id}`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_order_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_order_by_id(id=1, headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectResponse[Order]`][integrify.clopos.schemas.response.ObjectResponse]**
+
+            Args:
+                id: Order ID
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def create_order(
             self,
-            # order: Order,
+            customer_id: str,
+            line_items: list[LineItem],
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectResponse[Order]]: ...
+        ) -> APIResponse[ObjectResponse[Order]]:
+            """Function for creating order
+
+            **Endpoint**: `POST /open-api/orders`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.create_order(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.create_order(headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectResponse[Order]`][integrify.clopos.schemas.response.ObjectResponse]**
+
+            Args:
+                order: Order object
+                headers: Headers for request
+            ```
+            """  # noqa: E501
+
+        def update_order(
+            self,
+            id: int,
+            status: OrderStatus,
+            *,
+            headers: Unset[dict[str, str]] = UNSET,
+        ) -> APIResponse[ObjectResponse[Order]]:
+            """Function for updating order
+
+            **Endpoint**: `PUT /open-api/orders/{id}`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+            from integrify.clopos.schemas.enums import OrderStatus
+
+            CloposClient.update_order(id=1, OrderStatus.IGNORE, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.update_order(id=1, status=OrderStatus.IGNORE)
+            ```
+
+            **Response format: [`ObjectResponse[Order]`][integrify.clopos.schemas.response.ObjectResponse]**
+
+            Args:
+                id: Order ID
+                status: Order status to update
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_receipts(
             self,
-            page: Unset[int] = UNSET,
-            limit: Unset[int] = UNSET,
+            page: Unset[int] = 1,
+            limit: Unset[int] = 50,
+            sort_by: Unset[str] = 'created_at',
+            sort_order: Unset[int] = -1,
+            date_from: Unset[Union[str, datetime]] = UNSET,
+            date_to: Unset[Union[str, datetime]] = UNSET,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectListResponse[Receipt]]: ...
+        ) -> APIResponse[ObjectListResponse[Receipt]]:
+            """Function for getting list of receipts
+
+            **Endpoint**: `GET /open-api/receipts`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_receipts(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_receipts(headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectListResponse[Receipt]`][integrify.clopos.schemas.response.ObjectListResponse]**
+
+            Args:
+                page: Page number for pagination (starts at 1)
+                limit: Maximum number of objects to return (1-200)
+                sort_by: Primary sort field
+                sort_order: Primary sort direction (1 = ascending, -1 = descending)
+                date_from: Start date (inclusive) in YYYY-MM-DD format
+                date_to: End date (inclusive) in YYYY-MM-DD format
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def get_receipt_by_id(
             self,
             id: int,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectResponse[Receipt]]: ...
+        ) -> APIResponse[ObjectResponse[Receipt]]:
+            """Function for getting receipt by id
+
+            **Endpoint**: `GET /open-api/receipts/{id}`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_receipt_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_receipt_by_id(id=1, headers={'x-token': token})
+            ```
+
+            **Response format: [`ObjectResponse[Receipt]`][integrify.clopos.schemas.response.ObjectResponse]**
+
+            Args:
+                id: Receipt ID
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def create_receipt(
             self,
-            # receipt: Receipt,
+            cid: str,
+            payment_methods: list[PaymentMethodIn],
+            user_id: int,
+            by_cash: Unset[Decimal] = UNSET,
+            by_card: Unset[Decimal] = UNSET,
+            customer_discount_type: Unset[DiscountType] = UNSET,
+            discount_rate: Unset[Decimal] = UNSET,
+            discount_value: Unset[Decimal] = UNSET,
+            delivery_fee: Unset[Decimal] = UNSET,
+            created_at: Unset[int] = UNSET,
+            closed_at: Unset[int] = UNSET,
+            address: Unset[str] = UNSET,
+            courier_id: UnsetOrNone[int] = UNSET,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[ObjectResponse[Receipt]]: ...
+            **kwargs,
+        ) -> APIResponse[ObjectResponse[Receipt]]:
+            """Function for creating receipt
+
+            **Endpoint**: `POST /open-api/receipts`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.create_receipt(cid='uuid', payment_methods=[{'id': 1, 'name': 'cash', 'amount': 100}], user_id=1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.create_receipt(cid='uuid', payment_methods=[{'id': 1, 'name': 'cash', 'amount': 100}], user_id=1, headers={'x-token': token})
+            ```
+
+            Notes:
+                - cid must be unique; if you send the same value again, you will get a 409.
+                - The sum of amounts in payment_methods[] should equal the total (it may differ from by_cash + by_card when you track tenders only via payment_methods).
+                - All time fields are strings and may represent Unix milliseconds in certain integrations.
+                - Creating a receipt through this endpoint stores it as a closed record and does not notify POS terminals or other systems.
+                - Read the `Retry-After` header before retrying if you encounter rate limits or transient errors.
+
+
+            **Response format: [`ObjectResponse[Receipt]`][integrify.clopos.schemas.response.ObjectResponse]**
+
+            Args:
+                cid: Transaction UUID
+                payment_methods: List of payment methods
+                user_id: User ID
+                by_cash: Cash total
+                by_card: Card total
+                customer_discount_type: Customer discount type.
+                discount_rate: Percentage discount
+                discount_value: Amount-based discount
+                delivery_fee: Delivery fee
+                created_at: Creation time (Unix ms)
+                closed_at: Closing time (Unix ms)
+                address: Customer address
+                courier_id: Courier user ID; can be any user ID
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
         def delete_receipt(
             self,
             id: int,
+            *,
             headers: Unset[dict[str, str]] = UNSET,
-        ) -> APIResponse[BaseResponse]: ...
+        ) -> APIResponse[BaseResponse]:
+            """Function for deleting receipt
+
+            **Endpoint**: `DELETE /open-api/receipts/{id}`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.delete_receipt(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.delete_receipt(id=1, headers={'x-token': token})
+            ```
+
+            **Response format: [`BaseResponse`][integrify.clopos.schemas.response.BaseResponse]**
+
+            Args:
+                id: Receipt ID
+                headers: Headers for request
+            ```
+            """  # noqa: E501
 
 
 CloposRequest = CloposClientClass(sync=True)

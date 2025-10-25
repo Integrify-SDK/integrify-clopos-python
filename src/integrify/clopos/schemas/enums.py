@@ -22,3 +22,10 @@ class OrderStatus(str, Enum):
     CONFIRMED = 'CONFIRMED'
     COMPLETED = 'COMPLETED'
     CANCELLED = 'CANCELLED'
+    IGNORE = 'IGNORE'
+
+
+class DiscountType(int, Enum):
+    NONE = 0
+    PERCENTAGE = 1
+    FIXED = 2

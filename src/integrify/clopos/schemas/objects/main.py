@@ -3,15 +3,16 @@ from typing import Union
 
 from pydantic import BaseModel, Field
 
-from integrify.clopos.schemas.enums import CategoryType, OrderStatus, ProductType
+from integrify.clopos.schemas.enums import CategoryType, DiscountType, OrderStatus, ProductType
+from integrify.clopos.schemas.objects.input import ReceiptProductIn
 from integrify.clopos.schemas.objects.sub import (
     Balance,
     Image,
     Media,
     ModifierGroup,
     OrderItem,
+    OrderPayload,
     Package,
-    Payload,
     Price,
     ReceiptPaymentMethod,
     Recipe,
@@ -112,7 +113,7 @@ class Group(Timestamp):
     name: str
     """The name of the customer group"""
 
-    discount_type: UnsetOrNoneField[str]
+    discount_type: UnsetOrNoneField[DiscountType]
     """The type of discount applied to the customer group"""
 
     discount_value: int
@@ -588,7 +589,7 @@ class Order(Timestamp):
     status: OrderStatus
     """Current lifecycle state. accepted orders are sent to the POS"""
 
-    payload: Payload
+    payload: OrderPayload
     """ Payload of the order"""
 
     receipt_id: UnsetOrNoneField[int]
@@ -677,6 +678,9 @@ class Receipt(Timestamp):
     status: UnsetOrNoneField[int]
     """Receipt status code"""
 
+    local_status: UnsetOrNoneField[int] = None
+    """Receipt local status"""
+
     lock: UnsetOrNoneField[bool]
     """Lock identifier"""
 
@@ -725,7 +729,10 @@ class Receipt(Timestamp):
     remaining: UnsetOrNoneField[Decimal]
     """Remaining amount"""
 
-    discount_type: UnsetOrNoneField[int]
+    customer_discount_type: UnsetOrNoneField[int] = None
+    """Customer discount type"""
+
+    discount_type: UnsetOrNoneField[DiscountType]
     """Discount type"""
 
     discount_value: UnsetOrNoneField[Decimal]
@@ -776,6 +783,9 @@ class Receipt(Timestamp):
     order_number: UnsetOrNoneField[str]
     """Order number"""
 
+    receipt_products: UnsetOrNoneField[list[ReceiptProductIn]] = None
+    """Receipt products"""
+
     terminal_updated_at: UnsetOrNoneField[str]
     """Receipt terminal updated at"""
 
@@ -795,4 +805,4 @@ class Receipt(Timestamp):
     """Receipt properties"""
 
 
-Payload.model_rebuild()
+OrderPayload.model_rebuild()
