@@ -38,7 +38,6 @@ from integrify.clopos.schemas.objects.main import (
     Venue,
 )
 from integrify.clopos.schemas.objects.sub import LineItem
-from integrify.clopos.schemas.request import GetProductsRequest
 from integrify.clopos.schemas.response import (
     AuthResponse,
     BaseResponse,

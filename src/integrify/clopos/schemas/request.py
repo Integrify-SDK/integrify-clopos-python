@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from pydantic import BaseModel, Field, model_serializer
+from pydantic import Field, model_serializer
 
 from integrify.api import PayloadBaseModel
 from integrify.clopos import env
