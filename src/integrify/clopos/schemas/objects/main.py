@@ -4,7 +4,6 @@ from typing import Union
 from pydantic import BaseModel, Field
 
 from integrify.clopos.schemas.enums import CategoryType, DiscountType, OrderStatus, ProductType
-from integrify.clopos.schemas.objects.input import ReceiptProductIn
 from integrify.clopos.schemas.objects.sub import (
     Balance,
     Image,
@@ -15,7 +14,7 @@ from integrify.clopos.schemas.objects.sub import (
     Package,
     Price,
     ReceiptPaymentMethod,
-    Recipe,
+    ReceiptProduct,
     Tax,
     TimerSetting,
     Timestamp,
@@ -334,7 +333,7 @@ class Product(Timestamp):
     net_output: UnsetOrNoneField[int]
     """Net output of the product"""
 
-    type: ProductType
+    type: UnsetOrNoneField[ProductType]
     """product, ingredient, accounting"""
 
     name: str
@@ -361,7 +360,7 @@ class Product(Timestamp):
     cost: UnsetOrNoneField[Decimal]
     """The cost of the product"""
 
-    status: int
+    status: UnsetOrNoneField[int]
     """1 = active, 0 = inactive"""
 
     hidden: UnsetOrNoneField[bool]
@@ -394,7 +393,7 @@ class Product(Timestamp):
     modificator_groups: UnsetOrNoneField[list[ModifierGroup]]
     """List of modificator groups for GOODS type products. See Modificator Group Object"""
 
-    recipe: UnsetOrNoneField[Recipe]
+    recipe: UnsetOrNoneField[list['Product']]
     """Recipe for DISH or PREPARATION type products. See Recipe Item."""
 
     packages: UnsetOrNoneField[list[Package]]
@@ -466,10 +465,10 @@ class Product(Timestamp):
     venues: UnsetOrNoneField[list[Venue]]
     """The venues the product is available in"""
 
-    properties: UnsetOrNoneField[list[dict]]
+    properties: UnsetOrNoneField[Union[dict, list]]
     """The properties of the product"""
 
-    media: list[Media]
+    media: UnsetOrNoneField[list[Media]]
     """Media of the product"""
 
     tags: UnsetOrNoneField[list[dict]]
@@ -486,6 +485,12 @@ class Product(Timestamp):
 
     open_receipts_count: UnsetOrNoneField[int]
     """The number of open receipts for the product"""
+
+    created_at: UnsetOrNoneField[str]  # type: ignore[assignment]
+    """The timestamp when the object was created"""
+
+    updated_at: UnsetOrNoneField[str]  # type: ignore[assignment]
+    """The timestamp when the object was last updated"""
 
 
 class PaymentMethod(Timestamp):
@@ -545,7 +550,7 @@ class SaleType(Timestamp):
     payment_method: UnsetOrNoneField[PaymentMethod]
     """An object containing details of the associated payment method"""
 
-    media: list[Media]
+    media: UnsetOrNoneField[list[Media]]
     """Media of the sale type"""
 
 
@@ -783,7 +788,7 @@ class Receipt(Timestamp):
     order_number: UnsetOrNoneField[str]
     """Order number"""
 
-    receipt_products: UnsetOrNoneField[list[ReceiptProductIn]] = None
+    receipt_products: UnsetOrNoneField[list[ReceiptProduct]] = None
     """Receipt products"""
 
     terminal_updated_at: UnsetOrNoneField[str]

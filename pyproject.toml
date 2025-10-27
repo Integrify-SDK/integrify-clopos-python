@@ -35,9 +35,7 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
     "Topic :: Internet :: WWW/HTTP",
 ]
-dependencies = [
-    "integrify-core",
-]
+dependencies = ["integrify-core"]
 
 [project.urls]
 Homepage = "https://integrify.mmzeynalli.dev/integrations/clopos/about"
@@ -67,6 +65,7 @@ dev = [
 docs = [
     "mkdocs-material[imaging]>=9.6.4,<10",
     "mkdocstrings[python]>=0.28.1,<1.0.0",
+    "mkdocs-panzoom-plugin>=0.1.3,<0.2",
     "griffe-pydantic>=1.1.0,<2",
 ]
 

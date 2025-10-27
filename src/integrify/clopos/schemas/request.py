@@ -4,10 +4,9 @@ from pydantic import Field, model_serializer
 
 from integrify.api import PayloadBaseModel
 from integrify.clopos import env
-from integrify.clopos.helpers import IsoDateTime
+from integrify.clopos.helpers import BoolInt, IsoDateTime
 from integrify.clopos.schemas.enums import CategoryType, DiscountType, OrderStatus, ProductType
-from integrify.clopos.schemas.objects.input import PaymentMethodIn
-from integrify.clopos.schemas.objects.sub import LineItem
+from integrify.clopos.schemas.objects.input import OrderPayloadIn, PaymentMethodIn, ReceiptProductIn
 from integrify.utils import UnsetField, UnsetOrNoneField
 
 
@@ -65,31 +64,31 @@ class GetProductsRequest(GetPaginatedDataRequest):
     tags: UnsetField[list[int]]
     """Filters for products with the specified tag IDs"""
 
-    giftable: UnsetField[str]
+    giftable: UnsetField[BoolInt]
     """Filters for products that are ("1") or are not giftable"""
 
-    discountable: UnsetField[str]
+    discountable: UnsetField[BoolInt]
     """Filters for products that are ("1") or are not discountable"""
 
-    inventory_behavior: UnsetField[str]
+    inventory_behavior: UnsetField[int]
     """Filters by inventory behavior mode (e.g., "3")"""
 
-    have_ingredients: UnsetField[str]
+    have_ingredients: UnsetField[BoolInt]
     """Retrieves products that have a recipe/ingredients ("1")"""
 
-    sold_by_portion: UnsetField[str]
+    sold_by_portion: UnsetField[BoolInt]
     """Lists products sold by portion ("1")"""
 
-    has_variants: UnsetField[str]
+    has_variants: UnsetField[BoolInt]
     """Lists products that have variants (`modifications`) ("1")"""
 
-    has_modifiers: UnsetField[str]
+    has_modifiers: UnsetField[BoolInt]
     """Lists products that have modifier group (`modificator_groups`) ("1")"""
 
-    has_barcode: UnsetField[str]
+    has_barcode: UnsetField[BoolInt]
     """Retrieves products that have a barcode ("1")"""
 
-    has_service_charge: UnsetField[str]
+    has_service_charge: UnsetField[BoolInt]
     """Lists products to which a service charge applies ("1")"""
 
     @model_serializer(mode='wrap')
@@ -107,15 +106,21 @@ class GetProductsRequest(GetPaginatedDataRequest):
         return {'filters': result}
 
 
+class GetProductByIDRequest(GetByIDRequest):
+    with_: UnsetField[list[str]] = Field(alias='with[]')
+
+
 class GetOrdersRequest(GetPaginatedDataRequest):
     status: UnsetField[OrderStatus]
 
 
 class CreateOrderRequest(PayloadBaseModel):
-    customer_id: str
+    model_config = {'extra': 'allow'}
+
+    customer_id: int
     """Customer identifier"""
 
-    line_items: list[LineItem]
+    payload: OrderPayloadIn
     """List of order items"""
 
 
@@ -131,6 +136,8 @@ class GetReceiptsRequest(GetPaginatedDataRequest):
 
 
 class CreateReceiptRequest(PayloadBaseModel):
+    model_config = {'extra': 'allow'}
+
     cid: str
     payment_methods: list[PaymentMethodIn]
     user_id: int
@@ -138,9 +145,26 @@ class CreateReceiptRequest(PayloadBaseModel):
     by_card: UnsetField[Decimal]
     customer_discount_type: UnsetField[DiscountType]
     discount_rate: UnsetField[Decimal]
+    discount_type: UnsetField[DiscountType]
     discount_value: UnsetField[Decimal]
     delivery_fee: UnsetField[Decimal]
+    gift_total: UnsetField[Decimal]
+    guests: UnsetField[int]
+    original_subtotal: UnsetField[Decimal]
+    printed: UnsetField[bool]
+    receipt_products: UnsetOrNoneField[list[ReceiptProductIn]]
+    remaining: UnsetField[Decimal]
+    rps_discount: UnsetField[Decimal]
+    sale_type_id: UnsetField[int]
+    service_charge: UnsetField[Decimal]
+    service_charge_value: UnsetField[Decimal]
+    status: UnsetField[int]
+    subtotal: UnsetField[Decimal]
+    terminal_id: UnsetField[int]
+    total: UnsetField[Decimal]
+    total_tax: UnsetField[Decimal]
     created_at: UnsetField[int]
     closed_at: UnsetField[int]
     address: UnsetField[str]
     courier_id: UnsetOrNoneField[int]
+    meta: UnsetField[dict]

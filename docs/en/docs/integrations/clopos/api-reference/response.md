@@ -54,8 +54,6 @@
 
 ::: integrify.clopos.schemas.objects.sub.ModifierGroup
 
-::: integrify.clopos.schemas.objects.sub.Recipe
-
 ::: integrify.clopos.schemas.objects.sub.Package
 
 ::: integrify.clopos.schemas.objects.sub.Tax
@@ -80,10 +78,12 @@
 
 ::: integrify.clopos.schemas.objects.sub.OrderProductProduct
 
-::: integrify.clopos.schemas.objects.sub.LineItem
-
 ::: integrify.clopos.schemas.objects.sub.ReceiptPaymentMethod
+
+::: integrify.clopos.schemas.objects.sub.ReceiptProduct
 
 ### Helper Type
 
 ::: integrify.clopos.helpers.IsoDateTime
+
+::: integrify.clopos.helpers.BoolInt

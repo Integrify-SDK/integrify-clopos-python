@@ -1,6 +1,6 @@
 Clopos:
-  - About: "integrations/clopos/about.md"
-  - Env Variables: "integrations/clopos/env.md"
+  - "integrations/clopos/about.md"
+  - "integrations/clopos/env.md"
   - API Reference:
     - API Client: "integrations/clopos/api-reference/client.md"
     - Schemas:

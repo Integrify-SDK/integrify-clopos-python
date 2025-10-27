@@ -13,7 +13,7 @@ class ProductType(str, Enum):
     TIMER = 'TIMER'
     PREPARATION = 'PREPARATION'
     INGREDIENT = 'INGREDIENT'
-    MODIFICATION = 'MODIFICATION '
+    MODIFICATION = 'MODIFICATION'
 
 
 class OrderStatus(str, Enum):
@@ -21,6 +21,7 @@ class OrderStatus(str, Enum):
     PENDING = 'PENDING'
     CONFIRMED = 'CONFIRMED'
     COMPLETED = 'COMPLETED'
+    RECEIVED = 'RECEIVED'
     CANCELLED = 'CANCELLED'
     IGNORE = 'IGNORE'
 

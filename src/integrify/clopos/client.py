@@ -1,7 +1,6 @@
-from ctypes import Union
 from datetime import datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 
 from integrify.api import APIClient
 from integrify.clopos import env
@@ -17,13 +16,14 @@ from integrify.clopos.handlers import (
     GetOrderByIDHandler,
     GetOrdersHandler,
     GetPaginatedDataHandler,
+    GetProductByIDHandler,
     GetProductsHandler,
     GetReceiptsHandler,
     GetStationsHandler,
     UpdateOrderHandler,
 )
 from integrify.clopos.schemas.enums import CategoryType, DiscountType, OrderStatus, ProductType
-from integrify.clopos.schemas.objects.input import PaymentMethodIn
+from integrify.clopos.schemas.objects.input import OrderPayloadIn, PaymentMethodIn, ReceiptProductIn
 from integrify.clopos.schemas.objects.main import (
     Category,
     Customer,
@@ -37,7 +37,6 @@ from integrify.clopos.schemas.objects.main import (
     User,
     Venue,
 )
-from integrify.clopos.schemas.objects.sub import LineItem
 from integrify.clopos.schemas.response import (
     AuthResponse,
     BaseResponse,
@@ -94,7 +93,7 @@ class CloposClientClass(APIClient):
         self.add_url('get_products', env.API.PRODUCTS, verb='GET')
         self.add_handler('get_products', GetProductsHandler)
         self.add_url('get_product_by_id', env.API.PRODUCT_BY_ID, verb='GET')
-        self.add_handler('get_product_by_id', GetByIDHandler(Product))
+        self.add_handler('get_product_by_id', GetProductByIDHandler)
 
         self.add_url('get_sale_types', env.API.SALE_TYPES, verb='GET')
         self.add_handler('get_sale_types', GetPaginatedDataHandler(SaleType))
@@ -158,7 +157,7 @@ class CloposClientClass(APIClient):
             )
 
             # Or if you have set the environment variables
-            CloposClient.auth(headers={'x-token': token})
+            CloposClient.auth(headers={'x-token': 'token'})
             ```
 
             **Response format: [`AuthResponse`][integrify.clopos.schemas.response.AuthResponse]**
@@ -190,7 +189,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_venues(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_venues(headers={'x-token': token})
+            CloposClient.get_venues(headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectListResponse[Venue]`][integrify.clopos.schemas.response.ObjectListResponse]**
@@ -220,7 +219,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_users(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_users(headers={'x-token': token})
+            CloposClient.get_users(headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectListResponse[User]`][integrify.clopos.schemas.response.ObjectListResponse]**
@@ -249,7 +248,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_user_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_user_by_id(id=1, headers={'x-token': token})
+            CloposClient.get_user_by_id(id=1, headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectResponse[User]`][integrify.clopos.schemas.response.ObjectResponse]**
@@ -279,7 +278,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_customers(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_customers(headers={'x-token': token})
+            CloposClient.get_customers(headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectListResponse[Customer]`][integrify.clopos.schemas.response.ObjectListResponse]**
@@ -309,7 +308,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_customer_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_customer_by_id(id=1, headers={'x-token': token})
+            CloposClient.get_customer_by_id(id=1, headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectResponse[Customer]`][integrify.clopos.schemas.response.ObjectResponse]**
@@ -338,7 +337,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_customer_groups(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_customer_groups(headers={'x-token': token})
+            CloposClient.get_customer_groups(headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectListResponse[Group]`][integrify.clopos.schemas.response.ObjectListResponse]**
@@ -372,7 +371,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_categories(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_categories(headers={'x-token': token})
+            CloposClient.get_categories(headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectListResponse[Category]`][integrify.clopos.schemas.response.ObjectListResponse]**
@@ -405,7 +404,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_category_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_category_by_id(id=1, headers={'x-token': token})
+            CloposClient.get_category_by_id(id=1, headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectResponse[Category]`][integrify.clopos.schemas.response.ObjectResponse]**
@@ -436,7 +435,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_stations(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_stations(headers={'x-token': token})
+            CloposClient.get_stations(headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectListResponse[Station]`][integrify.clopos.schemas.response.ObjectListResponse]**
@@ -467,7 +466,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_station_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_station_by_id(id=1, headers={'x-token': token})
+            CloposClient.get_station_by_id(id=1, headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectResponse[Station]`][integrify.clopos.schemas.response.ObjectResponse]**
@@ -486,15 +485,15 @@ class CloposClientClass(APIClient):
             category_id: Unset[list[int]] = UNSET,
             station_id: Unset[list[int]] = UNSET,
             tags: Unset[list[int]] = UNSET,
-            giftable: Unset[str] = UNSET,
-            discountable: Unset[str] = UNSET,
-            inventory_behavior: Unset[str] = UNSET,
-            have_ingredients: Unset[str] = UNSET,
-            sold_by_portion: Unset[str] = UNSET,
-            has_variants: Unset[str] = UNSET,
-            has_modifiers: Unset[str] = UNSET,
-            has_barcode: Unset[str] = UNSET,
-            has_service_charge: Unset[str] = UNSET,
+            giftable: Unset[Union[int, bool]] = UNSET,
+            discountable: Unset[Union[int, bool]] = UNSET,
+            inventory_behavior: Unset[int] = UNSET,
+            have_ingredients: Unset[Union[int, bool]] = UNSET,
+            sold_by_portion: Unset[Union[int, bool]] = UNSET,
+            has_variants: Unset[Union[int, bool]] = UNSET,
+            has_modifiers: Unset[Union[int, bool]] = UNSET,
+            has_barcode: Unset[Union[int, bool]] = UNSET,
+            has_service_charge: Unset[Union[int, bool]] = UNSET,
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[Product]]:
@@ -509,7 +508,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_products(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_products(headers={'x-token': token})
+            CloposClient.get_products(headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectListResponse[Product]`][integrify.clopos.schemas.response.ObjectListResponse]**
@@ -521,15 +520,15 @@ class CloposClientClass(APIClient):
                 category_id: Lists products belonging to the specified category IDs
                 station_id: Retrieves products assigned to the specified station IDs
                 tags: Filters for products with the specified tag IDs
-                giftable: Filters for products that are ("1") or are not giftable
-                discountable: Filters for products that are ("1") or are not discountable
+                giftable: Filters for products that are ("1") or are not giftable. Possible values: 1, 0, true, false
+                discountable: Filters for products that are ("1") or are not discountable. Possible values: 1, 0, true, false
                 inventory_behavior: Filters by inventory behavior mode (e.g., "3")
-                have_ingredients: Retrieves products that have a recipe/ingredients ("1")
-                sold_by_portion: Lists products sold by portion ("1")
-                has_variants: Lists products that have variants (modifications) ("1")
-                has_modifiers: Retrieves products that have a modifier group (modificator_groups) ("1")
-                has_barcode: Retrieves products that have a barcode ("1")
-                has_service_charge: Lists products to which a service charge applies ("1")
+                have_ingredients: Retrieves products that have a recipe/ingredients ("1"). Possible values: 1, 0, true, false
+                sold_by_portion: Lists products sold by portion ("1"). Possible values: 1, 0, true, false
+                has_variants: Lists products that have variants (modifications) ("1"). Possible values: 1, 0, true, false
+                has_modifiers: Retrieves products that have a modifier group (modificator_groups) ("1"). Possible values: 1, 0, true, false
+                has_barcode: Retrieves products that have a barcode ("1"). Possible values: 1, 0, true, false
+                has_service_charge: Lists products to which a service charge applies ("1"). Possible values: 1, 0, true, false
                 headers: Headers for request
             ```
             """  # noqa: E501
@@ -537,6 +536,7 @@ class CloposClientClass(APIClient):
         def get_product_by_id(
             self,
             id: int,
+            with_: Unset[list[str]] = UNSET,
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectResponse[Product]]:
@@ -551,13 +551,14 @@ class CloposClientClass(APIClient):
             CloposClient.get_product_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_product_by_id(id=1, headers={'x-token': token})
+            CloposClient.get_product_by_id(id=1, headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectResponse[Product]`][integrify.clopos.schemas.response.ObjectResponse]**
 
             Args:
                 id: Product ID
+                with_: Related data selector. Example: taxes, unit, modifications, modificator_groups, recipe, packages, media, tags, setting. You can include multiple with parameters
                 headers: Headers for request
             ```
             """  # noqa: E501
@@ -580,7 +581,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_sale_types(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_sale_types(headers={'x-token': token})
+            CloposClient.get_sale_types(headers={'x-token': 'token'})
             ```
 
             Used by:
@@ -614,7 +615,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_payment_methods(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_payment_methods(headers={'x-token': token})
+            CloposClient.get_payment_methods(headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectListResponse[PaymentMethod]`][integrify.clopos.schemas.response.ObjectListResponse]**
@@ -645,7 +646,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_orders(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_orders(headers={'x-token': token})
+            CloposClient.get_orders(headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectListResponse[Order]`][integrify.clopos.schemas.response.ObjectListResponse]**
@@ -675,7 +676,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_order_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_order_by_id(id=1, headers={'x-token': token})
+            CloposClient.get_order_by_id(id=1, headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectResponse[Order]`][integrify.clopos.schemas.response.ObjectResponse]**
@@ -688,8 +689,9 @@ class CloposClientClass(APIClient):
 
         def create_order(
             self,
-            customer_id: str,
-            line_items: list[LineItem],
+            customer_id: int,
+            payload: OrderPayloadIn,
+            meta: Unset[dict] = UNSET,
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectResponse[Order]]:
@@ -701,16 +703,83 @@ class CloposClientClass(APIClient):
             ```python
             from integrify.clopos import CloposClient
 
-            CloposClient.create_order(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+            data = {
+                    'customer_id': 1,
+                    'payload': {
+                        'service': {
+                            'sale_type_id': 2,
+                            'sale_type_name': 'Delivery',
+                            'venue_id': 1,
+                            'venue_name': 'Main',
+                        },
+                        'customer': {
+                            'id': 9,
+                            'name': 'Rahid Akhundzada',
+                            'customer_discount_type': 1,
+                            'phone': '+994705401040',
+                        },
+                        'products': [
+                            {
+                                'product_id': 1,
+                                'count': 1,
+                                'product_modificators': [
+                                    {'modificator_id': 187, 'count': 1},
+                                    {'modificator_id': 201, 'count': 1},
+                                ],
+                                'meta': {
+                                    'price': 0,
+                                    'order_product': {
+                                        'product': {
+                                            'id': 1,
+                                            'name': 'Mega Dürüm Menü Alana Çiğ Köfte Dürüm',
+                                            'category_id': 1,
+                                            'station_id': 1,
+                                            'price': 0,
+                                        },
+                                        'count': 1,
+                                        'status': 'completed',
+                                        'product_modificators': [
+                                            {'modificator_id': 187, 'count': 1},
+                                            {'modificator_id': 201, 'count': 1},
+                                        ],
+                                        'product_hash': 'MTExODcsMTEyMDE=',
+                                    },
+                                },
+                            }
+                        ],
+                    },
+                    'meta': {
+                        'comment': '',
+                        'discount': {'discount_type': 1, 'discount_value': 10},
+                        'orderTotal': '16.2000',
+                        'apply_service_charge': True,
+                        'customer_discount_type': 1,
+                        'service_charge_value': 0,
+                    },
+                }
+
+            CloposClient.create_order(**data, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.create_order(headers={'x-token': token})
+            CloposClient.create_order(**data, headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectResponse[Order]`][integrify.clopos.schemas.response.ObjectResponse]**
 
+            Prerequisites:
+                - The top-level customer_id must be provided.
+                - Service context is required in payload.service:
+                - sale_type_id — a valid sale type ID from List Sale Types
+                - sale_type_name — human-readable sale type name
+                - venue_id and venue_name — the venue where the order will be fulfilled
+                - Product and modifier identifiers must exist in the POS catalog. Include the meta.order_product data returned by catalog APIs for accurate reconciliation.
+                - Totals and discounts are recalculated by the platform; send the raw values shown to operators.
+
             Args:
                 order: Order object
+                customer_id: Customer ID
+                payload: Order payload
+                meta: Meta object
                 headers: Headers for request
             ```
             """  # noqa: E501
@@ -768,7 +837,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_receipts(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_receipts(headers={'x-token': token})
+            CloposClient.get_receipts(headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectListResponse[Receipt]`][integrify.clopos.schemas.response.ObjectListResponse]**
@@ -801,7 +870,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_receipt_by_id(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.get_receipt_by_id(id=1, headers={'x-token': token})
+            CloposClient.get_receipt_by_id(id=1, headers={'x-token': 'token'})
             ```
 
             **Response format: [`ObjectResponse[Receipt]`][integrify.clopos.schemas.response.ObjectResponse]**
@@ -821,12 +890,29 @@ class CloposClientClass(APIClient):
             by_card: Unset[Decimal] = UNSET,
             customer_discount_type: Unset[DiscountType] = UNSET,
             discount_rate: Unset[Decimal] = UNSET,
+            discount_type: Unset[DiscountType] = UNSET,
             discount_value: Unset[Decimal] = UNSET,
             delivery_fee: Unset[Decimal] = UNSET,
+            gift_total: Unset[Decimal] = UNSET,
+            guests: Unset[int] = UNSET,
+            original_subtotal: Unset[Decimal] = UNSET,
+            printed: Unset[bool] = UNSET,
+            receipt_products: Unset[list[ReceiptProductIn]] = UNSET,
+            remaining: Unset[Decimal] = UNSET,
+            rps_discount: Unset[Decimal] = UNSET,
+            sale_type_id: Unset[int] = UNSET,
+            service_charge: Unset[Decimal] = UNSET,
+            service_charge_value: Unset[Decimal] = UNSET,
+            status: Unset[int] = UNSET,
+            subtotal: Unset[Decimal] = UNSET,
+            terminal_id: Unset[int] = UNSET,
+            total: Unset[Decimal] = UNSET,
+            total_tax: Unset[Decimal] = UNSET,
             created_at: Unset[int] = UNSET,
             closed_at: Unset[int] = UNSET,
             address: Unset[str] = UNSET,
             courier_id: UnsetOrNone[int] = UNSET,
+            meta: Unset[dict] = UNSET,
             *,
             headers: Unset[dict[str, str]] = UNSET,
             **kwargs,
@@ -842,7 +928,7 @@ class CloposClientClass(APIClient):
             CloposClient.create_receipt(cid='uuid', payment_methods=[{'id': 1, 'name': 'cash', 'amount': 100}], user_id=1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.create_receipt(cid='uuid', payment_methods=[{'id': 1, 'name': 'cash', 'amount': 100}], user_id=1, headers={'x-token': token})
+            CloposClient.create_receipt(cid='uuid', payment_methods=[{'id': 1, 'name': 'cash', 'amount': 100}], user_id=1, headers={'x-token': 'token'})
             ```
 
             Notes:
@@ -863,12 +949,29 @@ class CloposClientClass(APIClient):
                 by_card: Card total
                 customer_discount_type: Customer discount type.
                 discount_rate: Percentage discount
+                discount_type: Discount type
                 discount_value: Amount-based discount
                 delivery_fee: Delivery fee
+                gift_total: Gift total
+                guests: Number of guests
+                original_subtotal: Original subtotal
+                printed: If receipt is printed
+                receipt_products: List of receipt products
+                remaining: Remaining amount
+                rps_discount: RPS discount
+                sale_type_id: Sale type ID
+                service_charge: Service charge
+                service_charge_value: Service charge value
+                status: Status
+                subtotal: Subtotal
+                terminal_id: Terminal ID
+                total: Total
+                total_tax: Total tax
                 created_at: Creation time (Unix ms)
                 closed_at: Closing time (Unix ms)
                 address: Customer address
                 courier_id: Courier user ID; can be any user ID
+                meta: Metadata
                 headers: Headers for request
             ```
             """  # noqa: E501
@@ -890,7 +993,7 @@ class CloposClientClass(APIClient):
             CloposClient.delete_receipt(1, headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
 
             # Or if you have set the environment variables
-            CloposClient.delete_receipt(id=1, headers={'x-token': token})
+            CloposClient.delete_receipt(id=1, headers={'x-token': 'token'})
             ```
 
             **Response format: [`BaseResponse`][integrify.clopos.schemas.response.BaseResponse]**

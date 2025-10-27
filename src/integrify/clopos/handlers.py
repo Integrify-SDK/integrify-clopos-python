@@ -24,6 +24,7 @@ from integrify.clopos.schemas.request import (
     GetCustomersRequest,
     GetOrdersRequest,
     GetPaginatedDataRequest,
+    GetProductByIDRequest,
     GetProductsRequest,
     GetStationsRequest,
     UpdateOrderRequest,
@@ -150,6 +151,16 @@ class GetProductsHandler(AuthedAPIPayloadHandler):
 
     def post_handle_payload(self, data):
         return json.dumps(data)  # for urlencoding
+
+
+class GetProductByIDHandler(AuthedAPIPayloadHandler):
+    def __init__(
+        self,
+        req_model=GetProductByIDRequest,
+        resp_model=ObjectResponse[Product],
+        dry=False,
+    ):
+        super().__init__(req_model, resp_model, dry)
 
 
 class GetOrdersHandler(AuthedAPIPayloadHandler):

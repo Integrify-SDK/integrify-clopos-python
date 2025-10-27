@@ -1,9 +1,9 @@
 from decimal import Decimal
-from typing import Optional
 
 from pydantic import BaseModel
 
 from integrify.clopos.helpers import IsoDateTime
+from integrify.utils import UnsetField, UnsetOrNoneField
 
 
 class PaymentMethodIn(BaseModel):
@@ -17,8 +17,39 @@ class PaymentMethodIn(BaseModel):
     """The amount of the payment method"""
 
 
-class ReceiptProductIn(BaseModel):
+class ServiceIn(BaseModel):
+    sale_type_id: int
+    sale_type_name: str
+    venue_id: int
+    venue_name: str
+
+
+class CustomerIn(BaseModel):
     id: int
+    name: str
+    customer_discount_type: UnsetField[int] = None
+    phone: UnsetField[str] = None
+    address: UnsetOrNoneField[str]
+
+
+class ProductIn(BaseModel):
+    product_id: int
+    count: int
+    product_modificators: UnsetOrNoneField[list[dict]]
+    meta: UnsetOrNoneField[dict]
+
+
+class OrderPayloadIn(BaseModel):
+    service: ServiceIn
+    customer: CustomerIn
+    products: list[ProductIn]
+    meta: UnsetOrNoneField[dict]
+
+
+class ReceiptProductIn(BaseModel):
+    model_config = {'extra': 'allow'}
+
+    id: UnsetField[int]
     """The unique identifier for the receipt product"""
 
     cid: str
@@ -26,12 +57,6 @@ class ReceiptProductIn(BaseModel):
 
     product_id: int
     """The ID of the product associated with the receipt product"""
-
-    receipt_id: int
-    """The ID of the receipt associated with the receipt product"""
-
-    product_hash: str
-    """The hash of the product associated with the receipt product"""
 
     meta: dict
     """The meta data of the receipt product"""
@@ -48,62 +73,20 @@ class ReceiptProductIn(BaseModel):
     price: Decimal
     """The price of the receipt product"""
 
-    cost: Decimal
+    cost: UnsetField[Decimal]
     """The cost of the receipt product"""
 
     is_gift: bool
     """Whether the receipt product is a gift"""
 
-    preprint_count: int
-    """The preprint count of the receipt product"""
-
-    station_printed_count: int
-    """The station printed count of the receipt product"""
-
-    station_aborted_count: int
-    """The station aborted count of the receipt product"""
-
-    seller_id: int
-    """The ID of the seller associated with the receipt product"""
-
-    loyalty_type: Optional[str]
-    """The loyalty type of the receipt product"""
-
-    loyalty_value: Optional[Decimal]
-    """The loyalty value of the receipt product"""
-
-    discount_rate: Decimal
-    """The discount rate of the receipt product"""
-
-    discount_value: Decimal
-    """The discount value of the receipt product"""
-
-    discount_type: Decimal
-    """The discount type of the receipt product"""
-
-    total_discount: Decimal
-    """The total discount of the receipt product"""
-
-    subtotal: Decimal
-    """The subtotal of the receipt product"""
-
-    receipt_discount: Decimal
-    """The receipt discount of the receipt product"""
-
-    created_at: IsoDateTime
+    created_at: UnsetField[IsoDateTime]
     """The created at of the receipt product"""
 
-    updated_at: IsoDateTime
+    updated_at: UnsetField[IsoDateTime]
     """The updated at of the receipt product"""
 
-    terminal_updated_at: IsoDateTime
+    terminal_updated_at: UnsetField[IsoDateTime]
     """The terminal updated at of the receipt product"""
 
-    deleted_at: IsoDateTime
+    deleted_at: UnsetField[IsoDateTime]
     """The deleted at of the receipt product"""
-
-    receipt_product_modificators: list
-    """The receipt product modificators of the receipt product"""
-
-    taxes: list
-    """The taxes of the receipt product"""

@@ -1,9 +1,10 @@
 from decimal import Decimal
-from typing import TYPE_CHECKING, Literal, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
 from integrify.clopos.schemas.enums import DiscountType, ProductType
+from integrify.clopos.schemas.objects.input import ReceiptProductIn
 from integrify.utils import UnsetOrNoneField
 
 if TYPE_CHECKING:
@@ -48,7 +49,7 @@ class Balance(Timestamp):
 
 
 class Image(BaseModel):
-    original: str
+    original: UnsetOrNoneField[str]
     """The original image URL"""
 
     large: UnsetOrNoneField[str]
@@ -163,33 +164,6 @@ class ModifierGroup(Timestamp):
     """The pivot information of the group"""
 
 
-class Recipe(BaseModel):
-    """List of recipe items (for DISH or PREPARATION)"""
-
-    id: int
-    """The recipe's identifier"""
-
-    type: Union[
-        Literal[ProductType.DISH], Literal[ProductType.PREPARATION], Literal[ProductType.INGREDIENT]
-    ]
-    """The type of the recipe (DISH, PREPARATION, INGREDIENT)"""
-
-    ingredient_id: int
-    """The product ID of the recipe component"""
-
-    name: str
-    """The name of the component"""
-
-    cost_price: Decimal
-    """The cost price of the component"""
-
-    gross: str
-    """Gross amount"""
-
-    net: str
-    """Net amount"""
-
-
 class Package(BaseModel):
     """List of purchasing packages (for INGREDIENT)"""
 
@@ -282,7 +256,7 @@ class OrderProductProduct(BaseModel):
 
 
 class OrderProductMeta(BaseModel):
-    price: Decimal
+    price: UnsetOrNoneField[Decimal]
     """The sales price of the product"""
 
     order_product: OrderProductProduct
@@ -290,7 +264,7 @@ class OrderProductMeta(BaseModel):
 
 
 class OrderProduct(BaseModel):
-    product_id: int
+    product_id: UnsetOrNoneField[int]
     """The product ID"""
 
     count: int
@@ -299,7 +273,7 @@ class OrderProduct(BaseModel):
     product_modificators: UnsetOrNoneField[list[dict]]
     """The modificators of the product"""
 
-    meta: OrderProductMeta
+    meta: UnsetOrNoneField[OrderProductMeta]
     """The product information"""
 
 
@@ -343,14 +317,6 @@ class OrderPayload(BaseModel):
     """The timestamp of the last update to the payload"""
 
 
-class LineItem(BaseModel):
-    product_id: int
-    """The product ID of the line item"""
-
-    quantity: int = Field(gt=0)
-    """The quantity of the line item"""
-
-
 class ReceiptPaymentMethod(BaseModel):
     id: int
     """The payment method ID"""
@@ -360,3 +326,53 @@ class ReceiptPaymentMethod(BaseModel):
 
     amount: Decimal
     """The amount of the payment method"""
+
+
+class ReceiptProduct(ReceiptProductIn):
+    receipt_id: int
+    """The ID of the receipt associated with the receipt product"""
+
+    product_hash: Optional[str]
+    """The hash of the product associated with the receipt product"""
+
+    preprint_count: int
+    """The preprint count of the receipt product"""
+
+    station_printed_count: int
+    """The station printed count of the receipt product"""
+
+    station_aborted_count: int
+    """The station aborted count of the receipt product"""
+
+    seller_id: int
+    """The ID of the seller associated with the receipt product"""
+
+    loyalty_type: Optional[str]
+    """The loyalty type of the receipt product"""
+
+    loyalty_value: Optional[Decimal]
+    """The loyalty value of the receipt product"""
+
+    discount_rate: Decimal
+    """The discount rate of the receipt product"""
+
+    discount_value: Decimal
+    """The discount value of the receipt product"""
+
+    discount_type: Optional[DiscountType]
+    """The discount type of the receipt product"""
+
+    total_discount: Decimal
+    """The total discount of the receipt product"""
+
+    subtotal: Decimal
+    """The subtotal of the receipt product"""
+
+    receipt_discount: Decimal
+    """The receipt discount of the receipt product"""
+
+    receipt_product_modificators: list
+    """The receipt product modificators of the receipt product"""
+
+    taxes: list
+    """The taxes of the receipt product"""

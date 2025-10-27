@@ -1,6 +1,5 @@
 import os
 from enum import Enum
-from warnings import warn
 
 from integrify.utils import Environment
 
@@ -12,13 +11,6 @@ CLOPOS_CLIENT_SECRET: str = os.getenv('CLOPOS_CLIENT_SECRET', '')
 CLOPOS_BRAND: str = os.getenv('CLOPOS_BRAND', '')
 CLOPOS_VENUE_ID: str = os.getenv('CLOPOS_VENUE_ID', '')
 CLOPOS_ENV: str = os.getenv('CLOPOS_ENV', Environment.TEST.value)
-
-
-if not CLOPOS_CLIENT_ID or not CLOPOS_CLIENT_SECRET:  # pragma: no cover
-    warn(
-        'If you do not set CLOPOS_CLIENT_ID and CLOPOS_CLIENT_SECRET environment variables, '
-        'the integration might not work. '
-    )
 
 
 class API(str, Enum):
