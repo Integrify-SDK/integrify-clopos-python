@@ -123,6 +123,9 @@ class CreateOrderRequest(PayloadBaseModel):
     payload: OrderPayloadIn
     """List of order items"""
 
+    meta: UnsetField[dict]
+    """Order meta data"""
+
 
 class UpdateOrderRequest(GetByIDRequest):
     status: OrderStatus

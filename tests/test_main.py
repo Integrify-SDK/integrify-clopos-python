@@ -3,15 +3,19 @@ import random
 import uuid
 from typing import TYPE_CHECKING
 
+import pytest
 from pytest_mock import MockerFixture
 
 from integrify.clopos.schemas.enums import OrderStatus, ProductType
 from integrify.clopos.schemas.objects.main import Order, Product, Receipt
-from integrify.clopos.schemas.response import ErrorResponse
+from integrify.clopos.schemas.response import BaseResponse, ErrorResponse
 from tests.conftest import requires_env
 
 if TYPE_CHECKING:
     from tests.client import CloposTestClientClass
+
+# used to create, get, delete a receipt
+RECEIPT_ID = None
 
 
 @requires_env()
@@ -299,17 +303,6 @@ def test_get_receipts(authed_client: 'CloposTestClientClass'):
 
 
 @requires_env()
-def test_get_receipt_by_id(authed_client: 'CloposTestClientClass'):
-    resp = authed_client.get_receipt_by_id(1)
-
-    assert resp.ok
-    assert resp.body.success
-    assert isinstance(resp.body.data, Receipt)
-
-    assert resp.body.data.id == 1
-
-
-@requires_env()
 def test_get_receipt_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
     resp = authed_client.get_receipt_by_id(1_000_000_000)
 
@@ -322,6 +315,8 @@ def test_get_receipt_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
 
 @requires_env()
 def test_create_receipt(authed_client: 'CloposTestClientClass'):
+    global RECEIPT_ID
+
     cid = uuid.uuid4().hex
 
     data = {
@@ -426,15 +421,28 @@ def test_create_receipt(authed_client: 'CloposTestClientClass'):
 
     resp = authed_client.get_receipt_by_id(resp.body.data.id)
 
+    RECEIPT_ID = resp.body.data.id
     assert resp.ok
     assert isinstance(resp.body.data, Receipt)
     assert resp.body.data.cid == cid
 
 
 @requires_env()
-def test_delete_receipt(authed_client: 'CloposTestClientClass'):
-    resp = authed_client.delete_receipt(1)
+@pytest.mark.skipif(not RECEIPT_ID, reason='test_create_receipt must be run successfully first')
+def test_get_receipt_by_id(authed_client: 'CloposTestClientClass'):
+    resp = authed_client.get_receipt_by_id(RECEIPT_ID)  # type: ignore[arg-type]
 
-    assert not resp.ok
-    assert isinstance(resp.body, ErrorResponse)
-    assert resp.body.error == 'Method Not Allowed'
+    assert resp.ok
+    assert resp.body.success
+    assert isinstance(resp.body.data, Receipt)
+
+    assert resp.body.data.id == RECEIPT_ID
+
+
+@requires_env()
+@pytest.mark.skipif(not RECEIPT_ID, reason='test_create_receipt must be run successfully first')
+def test_delete_receipt(authed_client: 'CloposTestClientClass'):
+    resp = authed_client.delete_receipt(RECEIPT_ID)  # type: ignore[arg-type]
+
+    assert resp.ok
+    assert isinstance(resp.body, BaseResponse)

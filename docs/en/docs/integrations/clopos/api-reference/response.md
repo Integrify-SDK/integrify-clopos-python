@@ -81,9 +81,3 @@
 ::: integrify.clopos.schemas.objects.sub.ReceiptPaymentMethod
 
 ::: integrify.clopos.schemas.objects.sub.ReceiptProduct
-
-### Helper Type
-
-::: integrify.clopos.helpers.IsoDateTime
-
-::: integrify.clopos.helpers.BoolInt

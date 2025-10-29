@@ -6,6 +6,7 @@ from integrify.clopos.schemas.objects.main import (
     Category,
     Customer,
     Group,
+    PaymentMethod,
     SaleType,
     Station,
     User,
@@ -92,18 +93,11 @@ def test_get_customers(authed_client: 'CloposTestClientClass'):
 def test_get_customer_by_id(authed_client: 'CloposTestClientClass'):
     resp = authed_client.get_customer_by_id(1)
 
-    # assert resp.ok
-    # assert resp.body.success
-    # assert isinstance(resp.body.data, Customer)
+    assert resp.ok
+    assert resp.body.success
+    assert isinstance(resp.body.data, Customer)
 
-    # assert resp.body.data.id == 1
-
-    assert not resp.ok
-    assert isinstance(resp.body, ErrorResponse)
-    assert not resp.body.success
-
-    # assert resp.body.error == 'No query results for model [App\\Models\\Customer] 1000'
-    assert resp.body.error == 'Not found!'
+    assert resp.body.data.id == 1
 
 
 @requires_env()
@@ -114,8 +108,10 @@ def test_get_customer_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
     assert isinstance(resp.body, ErrorResponse)
     assert not resp.body.success
 
-    # assert resp.body.error == 'No query results for model [App\\Models\\Customer] 1000'
-    assert resp.body.error == 'Not found!'
+    assert (
+        resp.body.error
+        == 'No query results for model [App\\Models\\Client\\Marketing\\Customer] 1000'
+    )
 
 
 @requires_env()
@@ -140,20 +136,13 @@ def test_get_categories(authed_client: 'CloposTestClientClass'):
 
 @requires_env()
 def test_get_category_by_id(authed_client: 'CloposTestClientClass'):
-    resp = authed_client.get_category_by_id(1)
+    resp = authed_client.get_category_by_id(3)
 
-    # assert resp.ok
-    # assert resp.body.success
-    # assert isinstance(resp.body.data, Category)
+    assert resp.ok
+    assert resp.body.success
+    assert isinstance(resp.body.data, Category)
 
-    # assert resp.body.data.id == 1
-
-    assert not resp.ok
-    assert isinstance(resp.body, ErrorResponse)
-    assert not resp.body.success
-
-    # assert resp.body.error == 'No query results for model [App\\Models\\Customer] 1000'
-    assert resp.body.error == 'Not found!'
+    assert resp.body.data.id == 3
 
 
 @requires_env()
@@ -164,8 +153,7 @@ def test_get_category_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
     assert isinstance(resp.body, ErrorResponse)
     assert not resp.body.success
 
-    # assert resp.body.error == 'No query results for model [App\\Models\\Category] 1000'
-    assert resp.body.error == 'Not found!'
+    assert resp.body.error == 'No query results for model [App\\Models\\Client\\Category] 1000'
 
 
 @requires_env()
@@ -180,19 +168,13 @@ def test_get_stations(authed_client: 'CloposTestClientClass'):
 
 @requires_env()
 def test_get_station_by_id(authed_client: 'CloposTestClientClass'):
-    resp = authed_client.get_station_by_id(1)
+    resp = authed_client.get_station_by_id(2)
 
-    # assert resp.ok
-    # assert resp.body.success
-    # assert isinstance(resp.body.data, Station)
+    assert resp.ok
+    assert resp.body.success
+    assert isinstance(resp.body.data, Station)
 
-    # assert resp.body.data.id == 1
-
-    assert not resp.ok
-    assert isinstance(resp.body, ErrorResponse)
-    assert not resp.body.success
-
-    assert resp.body.error == 'Not found!'
+    assert resp.body.data.id == 2
 
 
 @requires_env()
@@ -203,8 +185,7 @@ def test_get_station_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
     assert isinstance(resp.body, ErrorResponse)
     assert not resp.body.success
 
-    # assert resp.body.error == 'No query results for model [App\\Models\\Station] 1000'
-    assert resp.body.error == 'Not found!'
+    assert resp.body.error == 'No query results for model [App\\Models\\Client\\Station] 1000'
 
 
 @requires_env()
@@ -221,13 +202,7 @@ def test_get_sale_types(authed_client: 'CloposTestClientClass'):
 def test_get_payment_methods(authed_client: 'CloposTestClientClass'):
     resp = authed_client.get_payment_methods()
 
-    # assert resp.ok
-    # assert resp.body.success
-    # assert isinstance(resp.body.data, list)
-    # assert isinstance(resp.body.data[0], PaymentMethod)
-
-    assert not resp.ok
-    assert isinstance(resp.body, ErrorResponse)
-    assert not resp.body.success
-
-    assert resp.body.error == 'Not found!'
+    assert resp.ok
+    assert resp.body.success
+    assert isinstance(resp.body.data, list)
+    assert isinstance(resp.body.data[0], PaymentMethod)

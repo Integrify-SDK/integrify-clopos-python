@@ -11,6 +11,9 @@ class BaseResponse(BaseModel):
     success: Literal[True]
     """Success status of the request"""
 
+    message: UnsetField[str]
+    """Success message"""
+
     time: int
     """Response time (ms)"""
 

@@ -512,7 +512,7 @@ class PaymentMethod(Timestamp):
     balance: UnsetOrNoneField[Balance]
     """An object containing details of the associated balance account"""
 
-    service: dict
+    service: UnsetOrNoneField[dict]
     """Details of any external service integrated with this payment method"""
 
     split: UnsetOrNoneField[int]

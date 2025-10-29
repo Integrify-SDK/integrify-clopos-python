@@ -904,7 +904,7 @@ gh = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "integrify-core", directory = "../integrify-core-python" }]
+requires-dist = [{ name = "integrify-core", specifier = ">=1.1.0" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -935,44 +935,15 @@ gh = [
 
 [[package]]
 name = "integrify-core"
-version = "1.0.5"
-source = { directory = "../integrify-core-python" }
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "httpx", specifier = ">=0.27.2,<0.28" },
-    { name = "pydantic", specifier = ">=2.8.2,<3" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "bandit", specifier = ">=1.7.10,<2" },
-    { name = "coverage", specifier = ">=7.6.3,<8" },
-    { name = "duty", specifier = ">=1.5.0" },
-    { name = "mypy", specifier = ">=1.9.0,<2" },
-    { name = "pre-commit", specifier = ">=3.8.0,<4" },
-    { name = "ptpython", specifier = ">=3.0.29,<4" },
-    { name = "pylint", specifier = ">=3.3.1,<4" },
-    { name = "pytest", specifier = ">=8.1.1,<9" },
-    { name = "pytest-mock", specifier = ">=3.14.0,<4" },
-    { name = "ruff", specifier = ">=0.3.5,<0.4" },
-]
-docs = [
-    { name = "griffe-pydantic", specifier = ">=1.1.0,<2" },
-    { name = "mkdocs-material", extras = ["imaging"], specifier = ">=9.6.4,<10" },
-    { name = "mkdocs-panzoom-plugin", specifier = ">=0.1.3,<0.2" },
-    { name = "mkdocstrings", extras = ["python"], specifier = ">=0.28.1,<1.0.0" },
-]
-gh = [
-    { name = "coverage", specifier = ">=7.6.3,<8" },
-    { name = "duty", specifier = ">=1.5.0" },
-    { name = "pytest", specifier = ">=8.1.1,<9" },
-    { name = "pytest-mock", specifier = ">=3.14.0,<4" },
-    { name = "smokeshow", specifier = ">=0.4.0,<0.5" },
+sdist = { url = "https://files.pythonhosted.org/packages/3c/96/98da5a657d8eee2151d03be6c9f5200ab2c9e326e8ed37b09f6d54a88983/integrify_core-1.1.0.tar.gz", hash = "sha256:d582926975f032639851baa11872659842f0fb611272d00967450402b4d86908", size = 22795, upload-time = "2025-10-28T13:18:29.805Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9e/d9/596b9470cdcf01e7e4f8074d6f680a03a328e229d840dba4b1be9092dbfa/integrify_core-1.1.0-py3-none-any.whl", hash = "sha256:ca3d63ed13288833d3a6a8fc222cb47e5343f50a9d842d306df67e1362fa473d", size = 22083, upload-time = "2025-10-28T13:18:27.824Z" },
 ]
 
 [[package]]

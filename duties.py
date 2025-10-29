@@ -13,7 +13,7 @@ PYTHON_VERSIONS = os.getenv('PYTHON_VERSIONS', '3.9 3.10 3.11 3.12 3.13').split(
 SRC = ('.',)
 SEP = os.sep
 
-DOCS_LANGS = ('az',)
+DOCS_LANGS = ('en',)
 
 if os.name == 'nt':
     import sys

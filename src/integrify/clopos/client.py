@@ -776,7 +776,6 @@ class CloposClientClass(APIClient):
                 - Totals and discounts are recalculated by the platform; send the raw values shown to operators.
 
             Args:
-                order: Order object
                 customer_id: Customer ID
                 payload: Order payload
                 meta: Meta object
