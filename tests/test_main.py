@@ -1,23 +1,20 @@
 # Main aspects of Clopos: Product, Sales, Order and Receipt
 import random
-import uuid
 from typing import TYPE_CHECKING
 
-import pytest
 from pytest_mock import MockerFixture
 
-from integrify.clopos.schemas.common.response import BaseResponse, ErrorResponse
+from integrify.clopos.schemas.common.response import BaseResponse, ErrorResponse, ObjectResponse
 from integrify.clopos.schemas.enums import OrderStatus, ProductType
 from integrify.clopos.schemas.orders.object import Order
-from integrify.clopos.schemas.products.object import Product
+from integrify.clopos.schemas.products.object import Product, StopList
 from integrify.clopos.schemas.receipts.object import Receipt
+from integrify.schemas import APIResponse
+from tests.client import CloposTestClientClass
 from tests.conftest import requires_env
 
 if TYPE_CHECKING:
     from tests.client import CloposTestClientClass
-
-# used to create, get, delete a receipt
-RECEIPT_ID = None
 
 
 @requires_env()
@@ -170,6 +167,16 @@ def test_get_product_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
 
 
 @requires_env()
+def test_get_stop_list(authed_client: 'CloposTestClientClass'):
+    resp = authed_client.get_stop_list()
+
+    assert resp.ok
+    assert resp.body.success
+    assert isinstance(resp.body.data, list)
+    assert isinstance(resp.body.data[0], StopList)
+
+
+@requires_env()
 def test_get_orders(authed_client: 'CloposTestClientClass'):
     resp = authed_client.get_orders()
 
@@ -318,135 +325,52 @@ def test_get_receipt_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
 
 
 @requires_env()
-def test_create_receipt(authed_client: 'CloposTestClientClass'):
-    global RECEIPT_ID
+def test_create_receipt(
+    authed_client: 'CloposTestClientClass',
+    new_receipt_resp: APIResponse[ObjectResponse[Receipt]],
+):
+    assert new_receipt_resp.ok
+    assert isinstance(new_receipt_resp.body.data, Receipt)
 
-    cid = uuid.uuid4().hex
-
-    data = {
-        'address': '',
-        'by_card': 0,
-        'by_cash': 30000,
-        'cid': cid,
-        'closed_at': 1755524813947,
-        'created_at': 1755524813947,
-        'customer_discount_type': 0,
-        'delivery_fee': 0,
-        'discount_rate': 0,
-        'discount_type': 0,
-        'discount_value': 0,
-        'gift_total': 0,
-        'guests': 1,
-        'meta': {
-            'preprint_count': 0,
-            'sale_type': {'name': 'Satis usulu 1'},
-            'user': {'name': 'Clopos'},
-            'terminal_updated_at': 1755524813947,
-            'availiableDeposit': 30000,
-        },
-        'original_subtotal': 30000,
-        'payment_methods': [{'id': 1, 'name': 'Cash', 'amount': 30000}],
-        'printed': False,
-        'receipt_products': [
-            {
-                'cid': 'f5b17d93-5586-411b-9e9d-934d3aa2e2ff',
-                'product_id': 31042,
-                'portion_size': 1,
-                'is_gift': 0,
-                'meta': {
-                    'product': {
-                        'name': 'Апельсинли реване',
-                        'giftable': False,
-                        'price': 22000,
-                        'modifier_name': 'not found',
-                        'discountable': True,
-                        'sold_by_weight': False,
-                        'priceWithoutTaxes': 22000,
-                        'barcode': '',
-                        'taxes': [],
-                        'station': {'id': 57, 'name': 'Отдел Кондитер'},
-                    },
-                    'originalPrice': 22000,
-                    'total_gift': 0,
-                    'discountedPrice': 0,
-                    'terminal_updated_at': 1755524813946,
-                },
-                'price': 22000,
-                'count': 1,
-                'subtotal': 22000,
-                'total': 22000,
-            },
-            {
-                'cid': 'c5202cc3-1f03-47b1-9dbc-5f049dabf997',
-                'product_id': 31046,
-                'portion_size': 1,
-                'is_gift': 0,
-                'meta': {
-                    'product': {
-                        'name': 'Ачма узум жевиз',
-                        'giftable': False,
-                        'price': 8000,
-                        'modifier_name': 'not found',
-                        'discountable': True,
-                        'sold_by_weight': False,
-                        'priceWithoutTaxes': 8000,
-                        'barcode': '',
-                        'taxes': [],
-                        'station': {'id': 57, 'name': 'Отдел Кондитер'},
-                    },
-                    'originalPrice': 8000,
-                    'total_gift': 0,
-                    'discountedPrice': 0,
-                    'terminal_updated_at': 1755524813947,
-                },
-                'price': 8000,
-                'count': 1,
-                'subtotal': 8000,
-                'total': 8000,
-            },
-        ],
-        'remaining': 0,
-        'rps_discount': 0,
-        'sale_type_id': 1000,
-        'service_charge': 0,
-        'service_charge_value': 0,
-        'status': 2,
-        'subtotal': 30000,
-        'terminal_id': 1,
-        'total': 30000,
-        'total_tax': 0,
-        'user_id': 1,
-    }
-
-    resp = authed_client.create_receipt(**data)  # type: ignore
+    resp = authed_client.get_receipt_by_id(new_receipt_resp.body.data.id)
 
     assert resp.ok
     assert isinstance(resp.body.data, Receipt)
-
-    resp = authed_client.get_receipt_by_id(resp.body.data.id)
-
-    RECEIPT_ID = resp.body.data.id
-    assert resp.ok
-    assert isinstance(resp.body.data, Receipt)
-    assert resp.body.data.cid == cid
 
 
 @requires_env()
-@pytest.mark.skipif(not RECEIPT_ID, reason='test_create_receipt must be run successfully first')
-def test_get_receipt_by_id(authed_client: 'CloposTestClientClass'):
-    resp = authed_client.get_receipt_by_id(RECEIPT_ID)  # type: ignore[arg-type]
+def test_get_receipt_by_id(authed_client: 'CloposTestClientClass', new_receipt_object: Receipt):
+    resp = authed_client.get_receipt_by_id(new_receipt_object.id)
 
     assert resp.ok
     assert resp.body.success
     assert isinstance(resp.body.data, Receipt)
 
-    assert resp.body.data.id == RECEIPT_ID
+    assert resp.body.data.id == new_receipt_object.id
 
 
 @requires_env()
-@pytest.mark.skipif(not RECEIPT_ID, reason='test_create_receipt must be run successfully first')
-def test_delete_receipt(authed_client: 'CloposTestClientClass'):
-    resp = authed_client.delete_receipt(RECEIPT_ID)  # type: ignore[arg-type]
+def test_update_closed_receipt(authed_client: 'CloposTestClientClass', new_receipt_object: Receipt):
+    resp = authed_client.get_receipt_by_id(new_receipt_object.id)
+
+    assert resp.ok
+    assert resp.body.success
+    assert isinstance(resp.body.data, Receipt)
+    assert resp.body.data.status != OrderStatus.NEW
+
+    resp = authed_client.update_closed_receipt(
+        id=new_receipt_object.id,
+        order_status=OrderStatus.NEW,
+    )
+
+    assert resp.ok
+    assert isinstance(resp.body.data, Receipt)
+    assert resp.body.data.order_status == OrderStatus.NEW
+
+
+@requires_env()
+def test_delete_receipt(authed_client: 'CloposTestClientClass', new_receipt_object: Receipt):
+    resp = authed_client.delete_receipt(new_receipt_object.id)
 
     assert resp.ok
     assert isinstance(resp.body, BaseResponse)

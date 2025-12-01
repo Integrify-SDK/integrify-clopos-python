@@ -242,8 +242,8 @@ class CreateReceiptHandler(AuthedAPIPayloadHandler):
 class _UpdateReceiptHandler(AuthedAPIPayloadHandler):
     def handle_payload(self, *args, **kwds):
         if self.req_model:
-            self.__req_model = self.req_model.from_args(*args, **kwds)
-            return self.__req_model.model_dump(
+            self._APIPayloadHandler__req_model = self.req_model.from_args(*args, **kwds)  # pylint: disable=invalid-name,attribute-defined-outside-init
+            return self._APIPayloadHandler__req_model.model_dump(
                 by_alias=True,
                 mode='json',
             )
