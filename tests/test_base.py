@@ -2,17 +2,13 @@
 
 from typing import TYPE_CHECKING
 
-from integrify.clopos.schemas.objects.main import (
-    Category,
-    Customer,
-    Group,
-    PaymentMethod,
-    SaleType,
-    Station,
-    User,
-    Venue,
-)
-from integrify.clopos.schemas.response import ErrorResponse
+from integrify.clopos.schemas.categories.object import Category
+from integrify.clopos.schemas.common.response import ErrorResponse
+from integrify.clopos.schemas.customers.object import Customer, Group
+from integrify.clopos.schemas.sales.object import PaymentMethod, SaleType
+from integrify.clopos.schemas.stations.object import Station
+from integrify.clopos.schemas.users.object import User
+from integrify.clopos.schemas.venues.object import Venue
 from tests.conftest import requires_env
 
 if TYPE_CHECKING:
@@ -77,6 +73,26 @@ def test_get_user_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
     assert not resp.body.success
 
     assert resp.body.error == 'No query results for model [App\\Models\\Auth\\User] 1000'
+
+
+@requires_env()
+def test_create_customer(authed_client: 'CloposTestClientClass'):
+    resp = authed_client.create_customer(
+        name='John Doe',
+        email='john.doe@example.com',
+        # Skip next two fields, as they need to be unique each time
+        # phone='+994555555552',
+        # code='CUST004',
+        description='Test Customer',
+        group_id=1,
+        gender=1,
+        date_of_birth='1990-05-15',
+    )
+
+    assert resp.ok
+    assert resp.body.success
+    assert isinstance(resp.body.data, Customer)
+    assert resp.body.data.name == 'John Doe'
 
 
 @requires_env()

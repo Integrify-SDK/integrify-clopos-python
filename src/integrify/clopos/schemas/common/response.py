@@ -45,14 +45,3 @@ class ErrorResponse(BaseModel):
     success: Literal[False]
     error: str
     message: Optional[str] = None
-
-
-######################################################################
-
-
-class AuthResponse(BaseModel):
-    success: Literal[True]
-    token: str
-    token_type: str
-    expires_in: int
-    message: str

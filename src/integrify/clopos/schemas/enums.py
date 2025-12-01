@@ -17,12 +17,16 @@ class ProductType(str, Enum):
 
 
 class OrderStatus(str, Enum):
+    NEW = 'NEW'
+    SCHEDULED = 'SCHEDULED'
     IN_PROGRESS = 'IN_PROGRESS'
     PENDING = 'PENDING'
+    READY = 'READY'
+    PICKED_UP = 'PICKED_UP'
     CONFIRMED = 'CONFIRMED'
     COMPLETED = 'COMPLETED'
-    RECEIVED = 'RECEIVED'
     CANCELLED = 'CANCELLED'
+    RECEIVED = 'RECEIVED'
     IGNORE = 'IGNORE'
 
 
@@ -30,3 +34,8 @@ class DiscountType(int, Enum):
     NONE = 0
     PERCENTAGE = 1
     FIXED = 2
+
+
+class Gender(int, Enum):
+    MALE = 1
+    FEMALE = 2

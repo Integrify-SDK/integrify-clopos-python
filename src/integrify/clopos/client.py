@@ -1,11 +1,12 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 from integrify.api import APIClient
 from integrify.clopos import env
 from integrify.clopos.handlers import (
     AuthHandler,
+    CreateCustomerHandler,
     CreateOrderHandler,
     CreateReceiptHandler,
     DeleteReceiptHandler,
@@ -20,29 +21,34 @@ from integrify.clopos.handlers import (
     GetProductsHandler,
     GetReceiptsHandler,
     GetStationsHandler,
+    GetStopListHandler,
+    UpdateClosedReceiptHandler,
     UpdateOrderHandler,
+    UpdateReceiptHandler,
 )
-from integrify.clopos.schemas.enums import CategoryType, DiscountType, OrderStatus, ProductType
-from integrify.clopos.schemas.objects.input import OrderPayloadIn, PaymentMethodIn, ReceiptProductIn
-from integrify.clopos.schemas.objects.main import (
-    Category,
-    Customer,
-    Group,
-    Order,
-    PaymentMethod,
-    Product,
-    Receipt,
-    SaleType,
-    Station,
-    User,
-    Venue,
-)
-from integrify.clopos.schemas.response import (
-    AuthResponse,
+from integrify.clopos.schemas.auth.response import AuthResponse
+from integrify.clopos.schemas.categories.object import Category
+from integrify.clopos.schemas.common.response import (
     BaseResponse,
     ObjectListResponse,
     ObjectResponse,
 )
+from integrify.clopos.schemas.customers.object import Customer, Group
+from integrify.clopos.schemas.enums import (
+    CategoryType,
+    DiscountType,
+    Gender,
+    OrderStatus,
+)
+from integrify.clopos.schemas.orders.object import Order, OrderPayloadIn
+from integrify.clopos.schemas.products.object import Product, StopList
+from integrify.clopos.schemas.products.request import GetProducstRequestFilter
+from integrify.clopos.schemas.receipts.object import Receipt, ReceiptProductIn
+from integrify.clopos.schemas.receipts.request import PaymentMethodIn, UpdateReceiptMetaData
+from integrify.clopos.schemas.sales.object import PaymentMethod, SaleType
+from integrify.clopos.schemas.stations.object import Station
+from integrify.clopos.schemas.users.object import User
+from integrify.clopos.schemas.venues.object import Venue
 from integrify.schemas import APIResponse
 from integrify.utils import UNSET, Unset, UnsetOrNone
 
@@ -77,6 +83,8 @@ class CloposClientClass(APIClient):
         self.add_handler('get_customers', GetCustomersHandler)
         self.add_url('get_customer_by_id', env.API.CUSTOMER_BY_ID, verb='GET')
         self.add_handler('get_customer_by_id', GetByIDHandler(Customer))
+        self.add_url('create_customer', env.API.CUSTOMERS, verb='POST')
+        self.add_handler('create_customer', CreateCustomerHandler)
         self.add_url('get_customer_groups', env.API.CUSTOMER_GROUPS, verb='GET')
         self.add_handler('get_customer_groups', GetPaginatedDataHandler(Group))
 
@@ -94,6 +102,8 @@ class CloposClientClass(APIClient):
         self.add_handler('get_products', GetProductsHandler)
         self.add_url('get_product_by_id', env.API.PRODUCT_BY_ID, verb='GET')
         self.add_handler('get_product_by_id', GetProductByIDHandler)
+        self.add_url('get_stop_list', env.API.STOP_LIST, verb='GET')
+        self.add_handler('get_stop_list', GetStopListHandler)
 
         self.add_url('get_sale_types', env.API.SALE_TYPES, verb='GET')
         self.add_handler('get_sale_types', GetPaginatedDataHandler(SaleType))
@@ -115,6 +125,10 @@ class CloposClientClass(APIClient):
         self.add_handler('get_receipt_by_id', GetByIDHandler(Receipt))
         self.add_url('create_receipt', env.API.RECEIPTS, verb='POST')
         self.add_handler('create_receipt', CreateReceiptHandler)
+        self.add_url('update_closed_receipt', env.API.RECEIPT_BY_ID, verb='PATCH')
+        self.add_handler('update_closed_receipt', UpdateClosedReceiptHandler)
+        self.add_url('update_receipt', env.API.RECEIPT_BY_ID, verb='PUT')
+        self.add_handler('update_receipt', UpdateReceiptHandler)
         self.add_url('delete_receipt', env.API.RECEIPT_BY_ID, verb='DELETE')
         self.add_handler('delete_receipt', DeleteReceiptHandler)
 
@@ -141,7 +155,8 @@ class CloposClientClass(APIClient):
             brand: Unset[str] = UNSET,
             venue_id: Unset[str] = UNSET,
         ) -> APIResponse[AuthResponse]:
-            """Function for authentication
+            """Exchange your client credentials for a short-lived access token that authorizes all other API requests.
+
 
             **Endpoint**: `POST /open-api/auth`
 
@@ -160,7 +175,7 @@ class CloposClientClass(APIClient):
             CloposClient.auth(headers={'x-token': 'token'})
             ```
 
-            **Response format: [`AuthResponse`][integrify.clopos.schemas.response.AuthResponse]**
+            **Response format: [`AuthResponse`][integrify.clopos.schemas.auth.response.AuthResponse]**
 
             This request returns you a token for subsequent API calls which is valid for one hour.
 
@@ -178,7 +193,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[Venue]]:
-            """Function for getting list of venues
+            """Allows you to quickly retrieve active branches connected to your brand to initiate location-based operations.
 
             **Endpoint**: `GET /open-api/venues`
 
@@ -192,7 +207,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_venues(headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectListResponse[Venue]`][integrify.clopos.schemas.response.ObjectListResponse]**
+            **Response format: [`ObjectListResponse[Venue]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
 
             Args:
                 page: Page number for pagination (starts at 1)
@@ -208,7 +223,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[User]]:
-            """Function for getting list of users
+            """Use this endpoint to inspect staff accounts, roles, and access levels across your venues.
 
             **Endpoint**: `GET /open-api/users`
 
@@ -222,7 +237,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_users(headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectListResponse[User]`][integrify.clopos.schemas.response.ObjectListResponse]**
+            **Response format: [`ObjectListResponse[User]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
 
             Args:
                 page: Page number for pagination (starts at 1)
@@ -237,7 +252,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectResponse[User]]:
-            """Function for getting user by id
+            """Retrieve a specific user by their unique identifier.
 
             **Endpoint**: `GET /open-api/users/{id}`
 
@@ -251,7 +266,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_user_by_id(id=1, headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectResponse[User]`][integrify.clopos.schemas.response.ObjectResponse]**
+            **Response format: [`ObjectResponse[User]`][integrify.clopos.schemas.common.response.ObjectResponse]**
 
             Args:
                 id: User ID
@@ -263,11 +278,13 @@ class CloposClientClass(APIClient):
             self,
             page: Unset[int] = 1,
             limit: Unset[int] = 20,
-            search: Unset[str] = UNSET,
+            with_: Unset[list[str]] = UNSET,
+            filter_bys: Unset[list[str]] = UNSET,
+            filter_values: Unset[list[str]] = UNSET,
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[Customer]]:
-            """Function for getting list of customers
+            """Retrieve all customers with optional search, pagination, filtering, and relationship inclusion
 
             **Endpoint**: `GET /open-api/customers`
 
@@ -281,12 +298,14 @@ class CloposClientClass(APIClient):
             CloposClient.get_customers(headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectListResponse[Customer]`][integrify.clopos.schemas.response.ObjectListResponse]**
+            **Response format: [`ObjectListResponse[Customer]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
 
             Args:
                 page: Page number for pagination (starts at 1)
                 limit: Maximum number of objects to return (1-100)
-                search: Search customers by name or email
+                with_: Include related data in the response. Supported values: `group`, `balance`, `cashback_balance`. You can include multiple with parameters.
+                filter_bys: Filter by specific fields. Supported values: `name` (partial match), `phones`, `group_id`.
+                filter_values: Filter values matching the filter_bys
                 headers: Headers for request
             ```
             """  # noqa: E501
@@ -297,7 +316,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectResponse[Customer]]:
-            """Function for getting customer by id
+            """Retrieve a specific customer by their unique identifier.
 
             **Endpoint**: `GET /open-api/customers/{id}`
 
@@ -311,11 +330,54 @@ class CloposClientClass(APIClient):
             CloposClient.get_customer_by_id(id=1, headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectResponse[Customer]`][integrify.clopos.schemas.response.ObjectResponse]**
+            **Response format: [`ObjectResponse[Customer]`][integrify.clopos.schemas.common.response.ObjectResponse]**
 
             Args:
                 id: Customer ID
                 headers: Headers for request
+            ```
+            """  # noqa: E501
+
+        def create_customer(
+            self,
+            name: str,
+            email: Unset[str] = UNSET,
+            phone: Unset[str] = UNSET,
+            code: Unset[str] = UNSET,
+            cid: Unset[str] = UNSET,
+            description: Unset[str] = UNSET,
+            group_id: Unset[int] = UNSET,
+            gender: Unset[Gender] = UNSET,
+            date_of_birth: Unset[str | date] = UNSET,
+            header: Unset[dict[str, str]] = UNSET,
+        ) -> APIResponse[ObjectResponse[Customer]]:
+            """Create a new customer with contact information and group assignment
+
+            **Endpoint**: `POST /open-api/customers`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.create_customer(name='John Doe', email='random@example.com', headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.create_customer(name='John Doe', email='random@example.com', headers={'x-token': 'token'})
+            ```
+
+            **Response format: [`ObjectResponse[Customer]`][integrify.clopos.schemas.common.response.ObjectResponse]**
+
+            Args:
+                name: Customer name
+                email: Customer email
+                phone: Customer phone (must be unique)
+                code: Customer code (must be unique)
+                cid: Customer CID
+                description: Customer description
+                group_id: Customer group ID
+                gender: Customer gender
+                date_of_birth: Customer date of birth in format YYYY-MM-DD
+                header: Headers for request
             ```
             """  # noqa: E501
 
@@ -326,7 +388,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[Group]]:
-            """Function for getting list of customer groups
+            """Retrieve a list of all customer groups with pagination support.
 
             **Endpoint**: `GET /open-api/customer-groups`
 
@@ -340,7 +402,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_customer_groups(headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectListResponse[Group]`][integrify.clopos.schemas.response.ObjectListResponse]**
+            **Response format: [`ObjectListResponse[Group]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
 
             Args:
                 page: Page number for pagination (starts at 1)
@@ -360,7 +422,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[Category]]:
-            """Function for getting list of menu categories
+            """Retrieve product categories along with their hierarchical structure
 
             **Endpoint**: `GET /open-api/categories`
 
@@ -374,7 +436,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_categories(headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectListResponse[Category]`][integrify.clopos.schemas.response.ObjectListResponse]**
+            **Response format: [`ObjectListResponse[Category]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
 
             Args:
                 page: Page number for pagination (starts at 1)
@@ -393,7 +455,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectResponse[Category]]:
-            """Function for getting menu category by id
+            """Retrieve a specific menu category with its hierarchical details
 
             **Endpoint**: `GET /open-api/categories/{id}`
 
@@ -407,7 +469,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_category_by_id(id=1, headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectResponse[Category]`][integrify.clopos.schemas.response.ObjectResponse]**
+            **Response format: [`ObjectResponse[Category]`][integrify.clopos.schemas.common.response.ObjectResponse]**
 
             Args:
                 id: Category ID
@@ -424,7 +486,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[Station]]:
-            """Function for getting list of stations
+            """Retrieve all preparation and service stations
 
             **Endpoint**: `GET /open-api/stations`
 
@@ -438,7 +500,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_stations(headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectListResponse[Station]`][integrify.clopos.schemas.response.ObjectListResponse]**
+            **Response format: [`ObjectListResponse[Station]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
 
             Args:
                 page: Page number for pagination (starts at 1)
@@ -455,7 +517,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectResponse[Station]]:
-            """Function for getting station by id
+            """Retrieve a specific preparation or service station
 
             **Endpoint**: `GET /open-api/stations/{id}`
 
@@ -469,7 +531,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_station_by_id(id=1, headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectResponse[Station]`][integrify.clopos.schemas.response.ObjectResponse]**
+            **Response format: [`ObjectResponse[Station]`][integrify.clopos.schemas.common.response.ObjectResponse]**
 
             Args:
                 id: Station ID
@@ -481,23 +543,12 @@ class CloposClientClass(APIClient):
             self,
             page: Unset[int] = 1,
             limit: Unset[int] = 50,
-            type: Unset[list[ProductType]] = UNSET,
-            category_id: Unset[list[int]] = UNSET,
-            station_id: Unset[list[int]] = UNSET,
-            tags: Unset[list[int]] = UNSET,
-            giftable: Unset[Union[int, bool]] = UNSET,
-            discountable: Unset[Union[int, bool]] = UNSET,
-            inventory_behavior: Unset[int] = UNSET,
-            have_ingredients: Unset[Union[int, bool]] = UNSET,
-            sold_by_portion: Unset[Union[int, bool]] = UNSET,
-            has_variants: Unset[Union[int, bool]] = UNSET,
-            has_modifiers: Unset[Union[int, bool]] = UNSET,
-            has_barcode: Unset[Union[int, bool]] = UNSET,
-            has_service_charge: Unset[Union[int, bool]] = UNSET,
+            selects: Unset[Union[str, list[str]]] = UNSET,
+            filters: Unset[GetProducstRequestFilter] = UNSET,
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[Product]]:
-            """Function for getting list of products
+            """Get the product catalog with advanced filtering and pagination.
 
             **Endpoint**: `GET /open-api/products`
 
@@ -511,24 +562,27 @@ class CloposClientClass(APIClient):
             CloposClient.get_products(headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectListResponse[Product]`][integrify.clopos.schemas.response.ObjectListResponse]**
+            **Response format: [`ObjectListResponse[Product]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
 
             Args:
                 page: Page number for pagination (starts at 1)
                 limit: Maximum number of objects to return (1-100)
-                type: Filters by product type. Possible values: GOODS, DISH, TIMER, PREPARATION, INGREDIENT
-                category_id: Lists products belonging to the specified category IDs
-                station_id: Retrieves products assigned to the specified station IDs
-                tags: Filters for products with the specified tag IDs
-                giftable: Filters for products that are ("1") or are not giftable. Possible values: 1, 0, true, false
-                discountable: Filters for products that are ("1") or are not discountable. Possible values: 1, 0, true, false
-                inventory_behavior: Filters by inventory behavior mode (e.g., "3")
-                have_ingredients: Retrieves products that have a recipe/ingredients ("1"). Possible values: 1, 0, true, false
-                sold_by_portion: Lists products sold by portion ("1"). Possible values: 1, 0, true, false
-                has_variants: Lists products that have variants (modifications) ("1"). Possible values: 1, 0, true, false
-                has_modifiers: Retrieves products that have a modifier group (modificator_groups) ("1"). Possible values: 1, 0, true, false
-                has_barcode: Retrieves products that have a barcode ("1"). Possible values: 1, 0, true, false
-                has_service_charge: Lists products to which a service charge applies ("1"). Possible values: 1, 0, true, false
+                selects: Comma-separated string OR list of fields to include in the response. The fields id, name, and type are always included regardless of this parameter. \
+                Example: selects=id,name,type,price,image
+                filters:
+                    - type: Filters by product type. Possible values: GOODS, DISH, TIMER, PREPARATION, INGREDIENT
+                    - category_id: Lists products belonging to the specified category IDs
+                    - station_id: Retrieves products assigned to the specified station IDs
+                    - tags: Filters for products with the specified tag IDs
+                    - giftable: Filters for products that are ("1") or are not giftable. Possible values: 1, 0, true, false
+                    - discountable: Filters for products that are ("1") or are not discountable. Possible values: 1, 0, true, false
+                    - inventory_behavior: Filters by inventory behavior mode (e.g., "3")
+                    - have_ingredients: Retrieves products that have a recipe/ingredients ("1"). Possible values: 1, 0, true, false
+                    - sold_by_portion: Lists products sold by portion ("1"). Possible values: 1, 0, true, false
+                    - has_variants: Lists products that have variants (modifications) ("1"). Possible values: 1, 0, true, false
+                    - has_modifiers: Retrieves products that have a modifier group (modificator_groups) ("1"). Possible values: 1, 0, true, false
+                    - has_barcode: Retrieves products that have a barcode ("1"). Possible values: 1, 0, true, false
+                    - has_service_charge: Lists products to which a service charge applies ("1"). Possible values: 1, 0, true, false
                 headers: Headers for request
             ```
             """  # noqa: E501
@@ -540,7 +594,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectResponse[Product]]:
-            """Function for getting product by id
+            """Retrieve a single product with type-specific details.
 
             **Endpoint**: `GET /open-api/products/{id}`
 
@@ -554,11 +608,50 @@ class CloposClientClass(APIClient):
             CloposClient.get_product_by_id(id=1, headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectResponse[Product]`][integrify.clopos.schemas.response.ObjectResponse]**
+            **Response format: [`ObjectResponse[Product]`][integrify.clopos.schemas.common.response.ObjectResponse]**
 
             Args:
                 id: Product ID
                 with_: Related data selector. Example: taxes, unit, modifications, modificator_groups, recipe, packages, media, tags, setting. You can include multiple with parameters
+                headers: Headers for request
+            ```
+            """  # noqa: E501
+
+        def get_stop_list(
+            self,
+            filter_bys: list[Literal['id', 'limit', 'timestamp']] = [],
+            filter_froms: list[int] = [],
+            filter_tos: list[int] = [],
+            *,
+            headers: Unset[dict[str, str]] = UNSET,
+        ) -> APIResponse[ObjectListResponse[StopList]]:
+            """Get stop list data for specific products.
+
+            You can filter by multiple parameters at once. For that have order of your lists in check.
+
+            **Endpoint**: `GET /open-api/products/stop-list`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.get_stop_list(headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.get_stop_list(
+                filter_bys=['id', 'limit'],
+                filter_froms=[1, 0],
+                filter_tos=[100, 10],
+                headers={'x-token': token},
+            ))  # Filter by id from 0 to 100 AND limit from 1 to 10
+            ```
+
+            **Response format: [`ObjectListResponse[StopList]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
+
+            Args:
+                filter_bys: Filter by: id, limit, timestamp
+                filter_froms: Filter from values
+                filter_tos: Filter to values
                 headers: Headers for request
             ```
             """  # noqa: E501
@@ -570,7 +663,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[SaleType]]:
-            """Function for getting list of sale types
+            """Retrieve a list of all available sale types.
 
             **Endpoint**: `GET /open-api/sale-types`
 
@@ -588,7 +681,7 @@ class CloposClientClass(APIClient):
                 Create Order: provide payload.service.sale_type_id and payload.service.venue_id
                 Create Receipt: optionally include sale_type_id or meta.sale_type
 
-            **Response format: [`ObjectListResponse[SaleType]`][integrify.clopos.schemas.response.ObjectListResponse]**
+            **Response format: [`ObjectListResponse[SaleType]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
 
             Args:
                 page: Page number for pagination (starts at 1)
@@ -604,7 +697,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[PaymentMethod]]:
-            """Function for getting list of payment methods
+            """Retrieve a list of all configured payment methods.
 
             **Endpoint**: `GET /open-api/payment-methods`
 
@@ -618,7 +711,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_payment_methods(headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectListResponse[PaymentMethod]`][integrify.clopos.schemas.response.ObjectListResponse]**
+            **Response format: [`ObjectListResponse[PaymentMethod]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
 
             Args:
                 page: Page number for pagination (starts at 1)
@@ -635,7 +728,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[Order]]:
-            """Function for getting list of orders
+            """Retrieve orders with replicable filters and status-based searches
 
             **Endpoint**: `GET /open-api/orders`
 
@@ -649,7 +742,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_orders(headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectListResponse[Order]`][integrify.clopos.schemas.response.ObjectListResponse]**
+            **Response format: [`ObjectListResponse[Order]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
 
             Args:
                 page: Page number for pagination (starts at 1)
@@ -662,10 +755,11 @@ class CloposClientClass(APIClient):
         def get_order_by_id(
             self,
             id: int,
+            with_: Unset[Literal['receipt:id', 'service_notification_id', 'status']] = UNSET,
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectResponse[Order]]:
-            """Function for getting order by id
+            """Retrieve a single order with status, customer, and line item details.
 
             **Endpoint**: `GET /open-api/orders/{id}`
 
@@ -679,10 +773,12 @@ class CloposClientClass(APIClient):
             CloposClient.get_order_by_id(id=1, headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectResponse[Order]`][integrify.clopos.schemas.response.ObjectResponse]**
+            **Response format: [`ObjectResponse[Order]`][integrify.clopos.schemas.common.response.ObjectResponse]**
 
             Args:
                 id: Order ID
+                with_: Include related resources in the response. Currently supported: receipt:id,service_notification_id,status. \
+                    When included, the data.receipt field will be present in the response (or null if no receipt exists for the order).
                 headers: Headers for request
             ```
             """  # noqa: E501
@@ -695,7 +791,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectResponse[Order]]:
-            """Function for creating order
+            """Create a new order with product line items and customer information
 
             **Endpoint**: `POST /open-api/orders`
 
@@ -764,7 +860,7 @@ class CloposClientClass(APIClient):
             CloposClient.create_order(**data, headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectResponse[Order]`][integrify.clopos.schemas.response.ObjectResponse]**
+            **Response format: [`ObjectResponse[Order]`][integrify.clopos.schemas.common.response.ObjectResponse]**
 
             Prerequisites:
                 - The top-level customer_id must be provided.
@@ -790,7 +886,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectResponse[Order]]:
-            """Function for updating order
+            """Update the status of an existing order
 
             **Endpoint**: `PUT /open-api/orders/{id}`
 
@@ -805,7 +901,7 @@ class CloposClientClass(APIClient):
             CloposClient.update_order(id=1, status=OrderStatus.IGNORE)
             ```
 
-            **Response format: [`ObjectResponse[Order]`][integrify.clopos.schemas.response.ObjectResponse]**
+            **Response format: [`ObjectResponse[Order]`][integrify.clopos.schemas.common.response.ObjectResponse]**
 
             Args:
                 id: Order ID
@@ -825,7 +921,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[Receipt]]:
-            """Function for getting list of receipts
+            """Retrieve all receipts with support for filters and sorting
 
             **Endpoint**: `GET /open-api/receipts`
 
@@ -839,7 +935,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_receipts(headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectListResponse[Receipt]`][integrify.clopos.schemas.response.ObjectListResponse]**
+            **Response format: [`ObjectListResponse[Receipt]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
 
             Args:
                 page: Page number for pagination (starts at 1)
@@ -858,7 +954,7 @@ class CloposClientClass(APIClient):
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectResponse[Receipt]]:
-            """Function for getting receipt by id
+            """Retrieve the full details of a specific receipt
 
             **Endpoint**: `GET /open-api/receipts/{id}`
 
@@ -872,7 +968,7 @@ class CloposClientClass(APIClient):
             CloposClient.get_receipt_by_id(id=1, headers={'x-token': 'token'})
             ```
 
-            **Response format: [`ObjectResponse[Receipt]`][integrify.clopos.schemas.response.ObjectResponse]**
+            **Response format: [`ObjectResponse[Receipt]`][integrify.clopos.schemas.common.response.ObjectResponse]**
 
             Args:
                 id: Receipt ID
@@ -916,7 +1012,7 @@ class CloposClientClass(APIClient):
             headers: Unset[dict[str, str]] = UNSET,
             **kwargs,
         ) -> APIResponse[ObjectResponse[Receipt]]:
-            """Function for creating receipt
+            """Create a new receipt with payment amounts and methods
 
             **Endpoint**: `POST /open-api/receipts`
 
@@ -938,7 +1034,7 @@ class CloposClientClass(APIClient):
                 - Read the `Retry-After` header before retrying if you encounter rate limits or transient errors.
 
 
-            **Response format: [`ObjectResponse[Receipt]`][integrify.clopos.schemas.response.ObjectResponse]**
+            **Response format: [`ObjectResponse[Receipt]`][integrify.clopos.schemas.common.response.ObjectResponse]**
 
             Args:
                 cid: Transaction UUID
@@ -975,13 +1071,191 @@ class CloposClientClass(APIClient):
             ```
             """  # noqa: E501
 
+        def update_closed_receipt(
+            self,
+            id: int,
+            order_status: Unset[OrderStatus] = UNSET,
+            order_number: Unset[str] = UNSET,
+            fiscal_id: Unset[str] = UNSET,
+            lock: Unset[bool] = UNSET,
+            *,
+            headers: Unset[dict[str, str]] = UNSET,
+        ) -> APIResponse[ObjectResponse[Receipt]]:
+            """Update specific fields of a receipt using the PATCH method. Only the provided fields will be updated; all other fields remain unchanged.
+
+            **Endpoint**: `PATCH /open-api/receipts/{id}`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.update_closed_receipt(1, order_status='NEW', headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.update_closed_receipt(id=1, order_status='NEW', headers={'x-token': 'token'})
+            ```
+
+            **Response format: [`ObjectResponse[Receipt]`][integrify.clopos.schemas.common.response.ObjectResponse]**
+
+            Args:
+                id: Receipt ID
+                order_status: New order status. Valid values: "NEW", "SCHEDULED", "IN_PROGRESS", "READY", "PICKED_UP", "COMPLETED", "CANCELLED"
+                order_number: Order number identifier (e.g., "RPO-00001")
+                fiscal_id: Fiscal receipt identifier
+                lock: Lock status of the receipt
+                headers: Headers for request
+            """  # noqa: E501
+
+        def update_receipt(
+            self,
+            id: int,
+            cid: str,
+            delivery_fee: int,
+            description: str,
+            order_number: str,
+            order_status: OrderStatus,
+            guests: int,
+            discount_rate: int,
+            discount_type: DiscountType,
+            discount_value: Optional[Decimal],
+            customer_id: int,
+            closed_at: str,
+            meta_customer: UpdateReceiptMetaData,
+            *,
+            headers: Unset[dict[str, str]] = UNSET,
+        ) -> APIResponse[ObjectResponse[Receipt]]:
+            """Comprehensively update a receipt using the PUT method. This method allows you to update multiple fields at once and can also be used to close receipts.
+
+            Critical Requirements:
+                - The cid and id fields must not change. If different values are sent, the system will treat it as a new receipt and return an error.
+                - All fields in the request body must be provided (full receipt object update).
+
+            **Endpoint**: `PUT /open-api/receipts/{id}`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+            from integrify.clopos.schemas.enums import DiscountType
+
+            CloposClient.update_receipt(
+                id=1,
+                cid='1',
+                delivery_fee=100,
+                description='Receipt description',
+                order_number='002',
+                order_status='NEW',
+                guests=2,
+                discount_rate=0,
+                discount_type=0,
+                discount_value=None,
+                customer_id=1,
+                closed_at='',
+                meta_customer={
+                    "name": "Rahid Akhundzada",
+                    "bonus": 0,
+                    "cashback": 54.69,
+                    "balance": -108,
+                    "desc": null,
+                    "code": null,
+                    "phone": "+994 70 540 10 40",
+                    "group_name": "My Customers",
+                    "group_id": 1
+                },
+                headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'}
+            )
+
+            # Or if you have set the environment variables
+            CloposClient.update_receipt(
+                id= 1,
+                cid'= 'a7890398-d8ae-41cb-b95f-4d21458d72cf',
+                delivery_fee=5,
+                description='Updated receipt description',
+                order_number='002',
+                order_status='IN_PROGRESS',
+                guests=2,
+                discount_rate=10,
+                discount_type=DiscountType.PERCENTAGE,
+                discount_value=0,
+                customer_id=123,
+                closed_at='',
+                meta_customer={
+                    'name': 'Rahid Akhundzada',
+                    'bonus': 0,
+                    'cashback': 54.69,
+                    'balance': -108,
+                    'desc': null,
+                    'code': null,
+                    'phone': '+994 70 540 10 40',
+                    'group_name': 'My Customers',
+                    'group_id': 1
+                },
+                headers={'x-token': 'token'}
+            )
+            ```
+
+            **Response format: [`ObjectResponse[Receipt]`][integrify.clopos.schemas.common.response.ObjectResponse]**
+
+            Args:
+                id: Receipt ID. **Must match the path parameter** - cannot be changed.
+                cid: Client identifier. **Must match the existing receipt's CID** - cannot be changed.
+                delivery_fee: Delivery fee amount.
+                description: Receipt description. Maximum 500 characters.
+                order_number: Order number identifier (e.g., "002").
+                order_status: Order status. Valid values: "NEW", "SCHEDULED", "IN_PROGRESS", "READY", "PICKED_UP", "COMPLETED", "CANCELLED".
+                guests: Number of guests
+                discount_rate: Discount rate
+                discount_type: Discount type. Valid values: 1 (percent), 2 (amount).
+                discount_value: Discount value. Required when discount_type is 2 (amount).
+                customer_id: Customer identifier. When adding or changing a customer, you must also provide the meta.customer data structure.
+                closed_at: Timestamp when the receipt was closed. Can be set to close the receipt. Format: "YYYY-MM-DD HH:MM:SS" or empty string "" to keep open.
+                meta_customer: Customer metadata object. Required when customer_id is provided.
+                headers: Headers for request
+            """  # noqa: E501
+
+        def close_receipt(
+            self,
+            id: int,
+            cid: str,
+            payment_methods: list[PaymentMethodIn],
+            closed_at: str,
+            *,
+            headers: Unset[dict[str, str]] = UNSET,
+        ) -> APIResponse[ObjectResponse[Receipt]]:
+            """Comprehensively update a receipt using the PUT method. This method allows you to update multiple fields at once and can also be used to close receipts.
+
+            Critical Requirements:
+                - The cid and id fields must not change. If different values are sent, the system will treat it as a new receipt and return an error.
+                - All fields in the request body must be provided (full receipt object update).
+
+            **Endpoint**: `PUT /open-api/receipts/{id}`
+
+            Example:
+            ```python
+            from integrify.clopos import CloposClient
+
+            CloposClient.update_closed_receipt(1, order_status='NEW', headers={'x-brand': 'openapitest', 'x-venue': '1', 'x-token': 'token'})
+
+            # Or if you have set the environment variables
+            CloposClient.update_closed_receipt(id=1, order_status='NEW', headers={'x-token': 'token'})
+            ```
+
+            **Response format: [`ObjectResponse[Receipt]`][integrify.clopos.schemas.common.response.ObjectResponse]**
+
+            Args:
+                id: Receipt ID. **Must match the path parameter** - cannot be changed.
+                cid: Client identifier. **Must match the existing receipt's CID** - cannot be changed.
+                payment_methods: List of payment methods with amounts
+                closed_at: Closing timestamp in format "YYYY-MM-DD HH:mm:ss". Must be greater than created_at.
+                headers: Headers for request
+            """  # noqa: E501
+
         def delete_receipt(
             self,
             id: int,
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[BaseResponse]:
-            """Function for deleting receipt
+            """Permanently remove a receipt by its identifier
 
             **Endpoint**: `DELETE /open-api/receipts/{id}`
 
@@ -995,7 +1269,7 @@ class CloposClientClass(APIClient):
             CloposClient.delete_receipt(id=1, headers={'x-token': 'token'})
             ```
 
-            **Response format: [`BaseResponse`][integrify.clopos.schemas.response.BaseResponse]**
+            **Response format: [`BaseResponse`][integrify.clopos.schemas.common.response.BaseResponse]**
 
             Args:
                 id: Receipt ID

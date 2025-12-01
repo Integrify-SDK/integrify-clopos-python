@@ -1,83 +1,115 @@
 # Response
 
-## Response Schemas
+## Common
 
-::: integrify.clopos.schemas.response.BaseResponse
+### Schemas
 
-::: integrify.clopos.schemas.response.ObjectResponse
+::: integrify.clopos.schemas.common.response.BaseResponse
 
-::: integrify.clopos.schemas.response.ObjectListResponse
+::: integrify.clopos.schemas.common.response.ObjectResponse
 
-::: integrify.clopos.schemas.response.ErrorResponse
+::: integrify.clopos.schemas.common.response.ObjectListResponse
 
-::: integrify.clopos.schemas.response.AuthResponse
+::: integrify.clopos.schemas.common.response.ErrorResponse
 
-## Response Object Schemas
+### Object
 
-### Main objects
+::: integrify.clopos.schemas.common.object.Timestamp
 
-::: integrify.clopos.schemas.objects.main.Venue
+::: integrify.clopos.schemas.common.object.Balance
 
-::: integrify.clopos.schemas.objects.main.User
+::: integrify.clopos.schemas.common.object.CashbackBalance
 
-::: integrify.clopos.schemas.objects.main.Group
+::: integrify.clopos.schemas.common.object.Image
 
-::: integrify.clopos.schemas.objects.main.Customer
+::: integrify.clopos.schemas.common.object.Media
 
-::: integrify.clopos.schemas.objects.main.Category
+::: integrify.clopos.schemas.common.object.Variant
 
-::: integrify.clopos.schemas.objects.main.Station
+::: integrify.clopos.schemas.common.object.Modifier
 
-::: integrify.clopos.schemas.objects.main.Product
+::: integrify.clopos.schemas.common.object.ModifierGroup
 
-::: integrify.clopos.schemas.objects.main.PaymentMethod
+::: integrify.clopos.schemas.common.object.Package
 
-::: integrify.clopos.schemas.objects.main.SaleType
+::: integrify.clopos.schemas.common.object.Tax
 
-::: integrify.clopos.schemas.objects.main.Order
+::: integrify.clopos.schemas.common.object.Price
 
-::: integrify.clopos.schemas.objects.main.Receipt
+::: integrify.clopos.schemas.common.object.TimerSetting
 
-### SubObjects
+::: integrify.clopos.schemas.common.object.Service
 
-::: integrify.clopos.schemas.objects.sub.Timestamp
+## Auth Schemas
 
-::: integrify.clopos.schemas.objects.sub.Balance
+::: integrify.clopos.schemas.auth.response.AuthResponse
 
-::: integrify.clopos.schemas.objects.sub.Image
+## Object
 
-::: integrify.clopos.schemas.objects.sub.Media
+### Venue
 
-::: integrify.clopos.schemas.objects.sub.Variant
+::: integrify.clopos.schemas.venues.object.Venue
 
-::: integrify.clopos.schemas.objects.sub.Modifier
+### User
 
-::: integrify.clopos.schemas.objects.sub.ModifierGroup
+::: integrify.clopos.schemas.users.object.User
 
-::: integrify.clopos.schemas.objects.sub.Package
+### Customer
 
-::: integrify.clopos.schemas.objects.sub.Tax
+::: integrify.clopos.schemas.customers.object.Group
 
-::: integrify.clopos.schemas.objects.sub.Price
+::: integrify.clopos.schemas.customers.object.Customer
 
-::: integrify.clopos.schemas.objects.sub.TimerSetting
+## Category
 
-::: integrify.clopos.schemas.objects.sub.OrderItem
+::: integrify.clopos.schemas.categories.object.Category
 
-::: integrify.clopos.schemas.objects.sub.Service
+## Station
 
-::: integrify.clopos.schemas.objects.sub.OrderProductProduct
+::: integrify.clopos.schemas.stations.object.Station
 
-::: integrify.clopos.schemas.objects.sub.OrderPayload
+## Product
 
-::: integrify.clopos.schemas.objects.sub.OrderCustomer
+::: integrify.clopos.schemas.products.object.Product
 
-::: integrify.clopos.schemas.objects.sub.OrderProduct
+::: integrify.clopos.schemas.products.object.StopList
 
-::: integrify.clopos.schemas.objects.sub.OrderProductMeta
+## Sales
 
-::: integrify.clopos.schemas.objects.sub.OrderProductProduct
+::: integrify.clopos.schemas.sales.object.PaymentMethod
 
-::: integrify.clopos.schemas.objects.sub.ReceiptPaymentMethod
+::: integrify.clopos.schemas.sales.object.SaleType
 
-::: integrify.clopos.schemas.objects.sub.ReceiptProduct
+## Order
+
+::: integrify.clopos.schemas.orders.object.Order
+
+::: integrify.clopos.schemas.orders.object.OrderItem
+
+::: integrify.clopos.schemas.orders.object.OrderPayload
+
+::: integrify.clopos.schemas.orders.object.OrderCustomer
+
+::: integrify.clopos.schemas.orders.object.OrderProduct
+
+::: integrify.clopos.schemas.orders.object.OrderProductMeta
+
+::: integrify.clopos.schemas.orders.object.OrderProductProduct
+
+::: integrify.clopos.schemas.orders.object.OrderPayloadIn
+
+::: integrify.clopos.schemas.orders.object.ProductIn
+
+::: integrify.clopos.schemas.orders.object.CustomerIn
+
+::: integrify.clopos.schemas.orders.object.ServiceIn
+
+## Receipt
+
+::: integrify.clopos.schemas.receipts.object.Receipt
+
+::: integrify.clopos.schemas.receipts.object.ReceiptProduct
+
+::: integrify.clopos.schemas.receipts.object.ReceiptPaymentMethod
+
+::: integrify.clopos.schemas.receipts.object.ReceiptProductIn

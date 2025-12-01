@@ -44,6 +44,7 @@
         - get_product_by_id
         - get_sale_types
         - get_payment_methods
+        - get_stop_list
         - get_orders
         - get_order_by_id
         - create_order
@@ -51,4 +52,7 @@
         - get_receipts
         - get_receipt_by_id
         - create_receipt
+        - update_closed_receipt
+        - update_receipt
+        - close_receipt
         - delete_receipt

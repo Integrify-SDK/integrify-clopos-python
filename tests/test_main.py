@@ -6,9 +6,11 @@ from typing import TYPE_CHECKING
 import pytest
 from pytest_mock import MockerFixture
 
+from integrify.clopos.schemas.common.response import BaseResponse, ErrorResponse
 from integrify.clopos.schemas.enums import OrderStatus, ProductType
-from integrify.clopos.schemas.objects.main import Order, Product, Receipt
-from integrify.clopos.schemas.response import BaseResponse, ErrorResponse
+from integrify.clopos.schemas.orders.object import Order
+from integrify.clopos.schemas.products.object import Product
+from integrify.clopos.schemas.receipts.object import Receipt
 from tests.conftest import requires_env
 
 if TYPE_CHECKING:
@@ -32,19 +34,21 @@ def test_get_products(authed_client: 'CloposTestClientClass'):
 def test_get_products_filters(authed_client: 'CloposTestClientClass'):
     resp = authed_client.get_products(
         limit=100,
-        type=[ProductType.GOODS, ProductType.DISH, ProductType.TIMER],
-        category_id=[1, 3],
-        station_id=[1, 2],
-        tags=[1, 2],
-        giftable=True,
-        discountable=True,
-        inventory_behavior=3,
-        have_ingredients=True,
-        sold_by_portion=True,
-        has_variants=True,
-        has_modifiers=True,
-        has_barcode=True,
-        has_service_charge=True,
+        filters={
+            'type': [ProductType.GOODS, ProductType.DISH, ProductType.TIMER],
+            'category_id': [1, 3],
+            'station_id': [1, 2],
+            'tags': [1, 2],
+            'giftable': True,
+            'discountable': True,
+            'inventory_behavior': 3,
+            'have_ingredients': True,
+            'sold_by_portion': True,
+            'has_variants': True,
+            'has_modifiers': True,
+            'has_barcode': True,
+            'has_service_charge': True,
+        },
     )
 
     assert resp.ok

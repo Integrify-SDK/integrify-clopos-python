@@ -6,36 +6,42 @@ from pydantic import Field
 
 from integrify.api import APIPayloadHandler
 from integrify.clopos import env
-from integrify.clopos.schemas.objects.main import (
-    Category,
-    Customer,
-    Order,
-    Product,
-    Receipt,
-    Station,
-)
-from integrify.clopos.schemas.request import (
-    AuthRequest,
-    CreateOrderRequest,
-    CreateReceiptRequest,
-    GetByIDRequest,
-    GetCategoriesRequest,
-    GetCategoryByIDRequest,
-    GetCustomersRequest,
-    GetOrdersRequest,
-    GetPaginatedDataRequest,
-    GetProductByIDRequest,
-    GetProductsRequest,
-    GetStationsRequest,
-    UpdateOrderRequest,
-)
-from integrify.clopos.schemas.response import (
-    AuthResponse,
+from integrify.clopos.schemas.auth.request import AuthRequest
+from integrify.clopos.schemas.auth.response import AuthResponse
+from integrify.clopos.schemas.categories.object import Category
+from integrify.clopos.schemas.categories.request import GetCategoriesRequest, GetCategoryByIDRequest
+from integrify.clopos.schemas.common.request import ByIDRequest, PaginatedDataRequest
+from integrify.clopos.schemas.common.response import (
     BaseResponse,
     ErrorResponse,
     ObjectListResponse,
     ObjectResponse,
 )
+from integrify.clopos.schemas.customers.object import Customer
+from integrify.clopos.schemas.customers.request import CreateCustomerRequest, GetCustomersRequest
+from integrify.clopos.schemas.orders.object import Order
+from integrify.clopos.schemas.orders.request import (
+    CreateOrderRequest,
+    GetOrderByIDRequest,
+    GetOrdersRequest,
+    UpdateOrderRequest,
+)
+from integrify.clopos.schemas.products.object import Product, StopList
+from integrify.clopos.schemas.products.request import (
+    GetProductByIDRequest,
+    GetProductsRequest,
+    GetStopListRequest,
+)
+from integrify.clopos.schemas.receipts.object import Receipt
+from integrify.clopos.schemas.receipts.request import (
+    CloseReceiptRequest,
+    CreateReceiptRequest,
+    GetReceiptsRequest,
+    UpdateClosedReceiptRequest,
+    UpdateReceiptRequest,
+)
+from integrify.clopos.schemas.stations.object import Station
+from integrify.clopos.schemas.stations.request import GetStationsRequest
 
 
 class AuthHandler(APIPayloadHandler):
@@ -69,7 +75,7 @@ class AuthedAPIPayloadHandler(APIPayloadHandler):
         return default
 
 
-def GetPaginatedDataHandler(object_type, req_model=GetPaginatedDataRequest):  # pylint: disable=invalid-name
+def GetPaginatedDataHandler(object_type, req_model=PaginatedDataRequest):  # pylint: disable=invalid-name
     """Function to dynamically create ObjectListResponse[object_type]"""
 
     class _GetPaginatedDataHandler(AuthedAPIPayloadHandler):
@@ -83,7 +89,7 @@ def GetPaginatedDataHandler(object_type, req_model=GetPaginatedDataRequest):  # 
     return _GetPaginatedDataHandler
 
 
-def GetByIDHandler(object_type, req_model=GetByIDRequest):  # pylint: disable=invalid-name
+def GetByIDHandler(object_type, req_model=ByIDRequest):  # pylint: disable=invalid-name
     """Function to dynamically create ObjectResponse[object_type]"""
 
     class _GetByIDHandler(AuthedAPIPayloadHandler):
@@ -105,6 +111,16 @@ class GetCustomersHandler(AuthedAPIPayloadHandler):
         self,
         req_model=GetCustomersRequest,
         resp_model=ObjectListResponse[Customer],
+        dry=False,
+    ):
+        super().__init__(req_model, resp_model, dry)
+
+
+class CreateCustomerHandler(AuthedAPIPayloadHandler):
+    def __init__(
+        self,
+        req_model=CreateCustomerRequest,
+        resp_model=ObjectResponse[Customer],
         dry=False,
     ):
         super().__init__(req_model, resp_model, dry)
@@ -163,6 +179,16 @@ class GetProductByIDHandler(AuthedAPIPayloadHandler):
         super().__init__(req_model, resp_model, dry)
 
 
+class GetStopListHandler(AuthedAPIPayloadHandler):
+    def __init__(
+        self,
+        req_model=GetStopListRequest,
+        resp_model=ObjectListResponse[StopList],
+        dry=False,
+    ):
+        super().__init__(req_model, resp_model, dry)
+
+
 class GetOrdersHandler(AuthedAPIPayloadHandler):
     def __init__(
         self,
@@ -174,7 +200,7 @@ class GetOrdersHandler(AuthedAPIPayloadHandler):
 
 
 class GetOrderByIDHandler(AuthedAPIPayloadHandler):
-    def __init__(self, req_model=GetByIDRequest, resp_model=ObjectResponse[Order], dry=False):
+    def __init__(self, req_model=GetOrderByIDRequest, resp_model=ObjectResponse[Order], dry=False):
         super().__init__(req_model, resp_model, dry)
 
 
@@ -196,7 +222,7 @@ class UpdateOrderHandler(AuthedAPIPayloadHandler):
 class GetReceiptsHandler(AuthedAPIPayloadHandler):
     def __init__(
         self,
-        req_model=GetPaginatedDataRequest,
+        req_model=GetReceiptsRequest,
         resp_model=ObjectListResponse[Receipt],
         dry=False,
     ):
@@ -213,6 +239,51 @@ class CreateReceiptHandler(AuthedAPIPayloadHandler):
         super().__init__(req_model, resp_model, dry)
 
 
+class _UpdateReceiptHandler(AuthedAPIPayloadHandler):
+    def handle_payload(self, *args, **kwds):
+        if self.req_model:
+            self.__req_model = self.req_model.from_args(*args, **kwds)
+            return self.__req_model.model_dump(
+                by_alias=True,
+                mode='json',
+            )
+
+        # `req_model` yoxdursa, o zaman `*args` boş olmalıdır, çünki onların key-ləri bilinmir
+        assert not args
+
+        return kwds
+
+
+class UpdateClosedReceiptHandler(_UpdateReceiptHandler):
+    def __init__(
+        self,
+        req_model=UpdateClosedReceiptRequest,
+        resp_model=ObjectResponse[Receipt],
+        dry=False,
+    ):
+        super().__init__(req_model, resp_model, dry)
+
+
+class UpdateReceiptHandler(_UpdateReceiptHandler):
+    def __init__(
+        self,
+        req_model=UpdateReceiptRequest,
+        resp_model=ObjectResponse[Receipt],
+        dry=False,
+    ):
+        super().__init__(req_model, resp_model, dry)
+
+
+class CloseReceiptHandler(_UpdateReceiptHandler):
+    def __init__(
+        self,
+        req_model=CloseReceiptRequest,
+        resp_model=ObjectResponse[Receipt],
+        dry=False,
+    ):
+        super().__init__(req_model, resp_model, dry)
+
+
 class DeleteReceiptHandler(AuthedAPIPayloadHandler):
-    def __init__(self, req_model=GetByIDRequest, resp_model=BaseResponse, dry=False):
+    def __init__(self, req_model=ByIDRequest, resp_model=BaseResponse, dry=False):
         super().__init__(req_model, resp_model, dry)

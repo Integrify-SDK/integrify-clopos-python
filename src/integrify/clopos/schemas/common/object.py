@@ -1,14 +1,10 @@
 from decimal import Decimal
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from integrify.clopos.schemas.enums import DiscountType, ProductType
-from integrify.clopos.schemas.objects.input import ReceiptProductIn
+from integrify.clopos.schemas.enums import ProductType
 from integrify.utils import UnsetOrNoneField
-
-if TYPE_CHECKING:
-    from integrify.clopos.schemas.objects.main import Product
 
 
 class Timestamp(BaseModel):
@@ -46,6 +42,17 @@ class Balance(Timestamp):
 
     position: int
     """The position of the balance"""
+
+
+class CashbackBalance(BaseModel):
+    name: UnsetOrNoneField[str]
+    """The name of the balance"""
+
+    type: str
+    """Balance type"""
+
+    amount: Decimal
+    """The balance amount"""
 
 
 class Image(BaseModel):
@@ -204,23 +211,6 @@ class TimerSetting(BaseModel):
     """List of prices by intervals"""
 
 
-class OrderItem(BaseModel):
-    id: int
-    """The order item's identifier"""
-
-    product_id: int
-    """The product ID of the order item"""
-
-    quantity: int
-    """The quantity of the order item"""
-
-    unit_price: Decimal
-    """The sales price of the order item"""
-
-    total_price: Decimal
-    """The total sales price of the order item"""
-
-
 class Service(BaseModel):
     sale_type_id: UnsetOrNoneField[int]
     """The sale type ID"""
@@ -233,146 +223,3 @@ class Service(BaseModel):
 
     venue_name: UnsetOrNoneField[str]
     """The name of the venue"""
-
-
-###################################################################################################
-
-
-class OrderProductProduct(BaseModel):
-    product: UnsetOrNoneField[Union['Product', list]]
-    """The product information"""
-
-    count: int
-    """The quantity of the product"""
-
-    status: UnsetOrNoneField[str]
-    """The status of the product (e.g., "Active", "Inactive")"""
-
-    product_modificators: UnsetOrNoneField[list[dict]]
-    """The modificators of the product"""
-
-    product_hash: UnsetOrNoneField[str]
-    """The hash of the product"""
-
-
-class OrderProductMeta(BaseModel):
-    price: UnsetOrNoneField[Decimal]
-    """The sales price of the product"""
-
-    order_product: OrderProductProduct
-    """The product information"""
-
-
-class OrderProduct(BaseModel):
-    product_id: UnsetOrNoneField[int]
-    """The product ID"""
-
-    count: int
-    """The quantity of the product"""
-
-    product_modificators: UnsetOrNoneField[list[dict]]
-    """The modificators of the product"""
-
-    meta: UnsetOrNoneField[OrderProductMeta]
-    """The product information"""
-
-
-class OrderCustomer(BaseModel):
-    id: UnsetOrNoneField[int]
-    """The customer ID"""
-
-    name: str
-    """The name of the customer"""
-
-    phone: UnsetOrNoneField[str]
-    """The phone number of the customer"""
-
-    address: UnsetOrNoneField[str]
-    """The address of the customer"""
-
-    customer_discount_type: UnsetOrNoneField[DiscountType]
-    """The discount type of the customer"""
-
-
-class OrderPayload(BaseModel):
-    service: UnsetOrNoneField[Service]
-    """The sale type of the order"""
-
-    customer: UnsetOrNoneField['OrderCustomer']
-    """The sale type of the order"""
-
-    products: UnsetOrNoneField[list[OrderProduct]]
-    """The products in the order"""
-
-    meta: UnsetOrNoneField[dict]
-    """The order information"""
-
-    customer_id: UnsetOrNoneField[int]
-    """The customer ID of the order"""
-
-    sale_type_id: UnsetOrNoneField[int]
-    """The sale type ID of the order"""
-
-    payload_updated_at: UnsetOrNoneField[str]
-    """The timestamp of the last update to the payload"""
-
-
-class ReceiptPaymentMethod(BaseModel):
-    id: int
-    """The payment method ID"""
-
-    name: str
-    """The name of the payment method"""
-
-    amount: Decimal
-    """The amount of the payment method"""
-
-
-class ReceiptProduct(ReceiptProductIn):
-    receipt_id: int
-    """The ID of the receipt associated with the receipt product"""
-
-    product_hash: Optional[str]
-    """The hash of the product associated with the receipt product"""
-
-    preprint_count: int
-    """The preprint count of the receipt product"""
-
-    station_printed_count: int
-    """The station printed count of the receipt product"""
-
-    station_aborted_count: int
-    """The station aborted count of the receipt product"""
-
-    seller_id: int
-    """The ID of the seller associated with the receipt product"""
-
-    loyalty_type: Optional[str]
-    """The loyalty type of the receipt product"""
-
-    loyalty_value: Optional[Decimal]
-    """The loyalty value of the receipt product"""
-
-    discount_rate: Decimal
-    """The discount rate of the receipt product"""
-
-    discount_value: Decimal
-    """The discount value of the receipt product"""
-
-    discount_type: Optional[DiscountType]
-    """The discount type of the receipt product"""
-
-    total_discount: Decimal
-    """The total discount of the receipt product"""
-
-    subtotal: Decimal
-    """The subtotal of the receipt product"""
-
-    receipt_discount: Decimal
-    """The receipt discount of the receipt product"""
-
-    receipt_product_modificators: list
-    """The receipt product modificators of the receipt product"""
-
-    taxes: list
-    """The taxes of the receipt product"""

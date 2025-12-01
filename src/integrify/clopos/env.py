@@ -37,6 +37,7 @@ class API(str, Enum):
 
     PRODUCTS = 'products'
     PRODUCT_BY_ID = 'products/{id}'
+    STOP_LIST = 'products/stop-list'
 
     SALE_TYPES = 'sale-types'
     PAYMENT_METHODS = 'payment-methods'

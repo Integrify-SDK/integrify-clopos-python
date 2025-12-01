@@ -93,6 +93,7 @@ def type_check(ctx: context.Context, *files):
     arg = ' '.join(files if files else SRC)
 
     ctx.run(f'mypy {arg}', title='Type checking with mypy')
+    # ctx.run(f'ty check {arg}', title='Type checking with ty')
 
 
 @duty
