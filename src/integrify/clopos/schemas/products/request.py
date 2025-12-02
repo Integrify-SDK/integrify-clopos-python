@@ -1,8 +1,8 @@
 from itertools import zip_longest
-from typing import Literal, TypedDict, Union
+from typing import Literal, Union
 
 from pydantic import Field, field_serializer, model_serializer
-from typing_extensions import NotRequired
+from typing_extensions import NotRequired, TypedDict
 
 from integrify.api import PayloadBaseModel
 from integrify.clopos.helpers import BoolInt
