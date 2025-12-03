@@ -41,7 +41,15 @@ class ObjectListResponse(PaginatedResponse, Generic[_ObjectTypeT]):
     data: list[_ObjectTypeT]
 
 
+class Errors(BaseModel):
+    message: Optional[str] = None
+    type: Optional[str] = None
+    exception: Optional[str] = None
+    code: Optional[int] = None
+    http_code: Optional[int] = None
+
+
 class ErrorResponse(BaseModel):
     success: Literal[False]
-    error: str
+    error: Optional[list[Errors]] = None
     message: Optional[str] = None

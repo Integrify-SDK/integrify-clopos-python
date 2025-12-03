@@ -34,6 +34,7 @@ from integrify.clopos.schemas.common.response import (
     ObjectResponse,
 )
 from integrify.clopos.schemas.customers.object import Customer, Group
+from integrify.clopos.schemas.customers.request import CustomerFilter
 from integrify.clopos.schemas.enums import (
     CategoryType,
     DiscountType,
@@ -42,7 +43,7 @@ from integrify.clopos.schemas.enums import (
 )
 from integrify.clopos.schemas.orders.object import Order, OrderPayloadIn
 from integrify.clopos.schemas.products.object import Product, StopList
-from integrify.clopos.schemas.products.request import GetProducstRequestFilter
+from integrify.clopos.schemas.products.request import GetProducstRequestFilter, StopListFilter
 from integrify.clopos.schemas.receipts.object import Receipt, ReceiptProductIn
 from integrify.clopos.schemas.receipts.request import PaymentMethodIn, UpdateReceiptMetaData
 from integrify.clopos.schemas.sales.object import PaymentMethod, SaleType
@@ -279,8 +280,7 @@ class CloposClientClass(APIClient):
             page: Unset[int] = 1,
             limit: Unset[int] = 20,
             with_: Unset[list[str]] = UNSET,
-            filter_bys: Unset[list[str]] = UNSET,
-            filter_values: Unset[list[str]] = UNSET,
+            filters: Unset[list[CustomerFilter]] = UNSET,
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[Customer]]:
@@ -303,9 +303,8 @@ class CloposClientClass(APIClient):
             Args:
                 page: Page number for pagination (starts at 1)
                 limit: Maximum number of objects to return (1-100)
-                with_: Include related data in the response. Supported values: `group`, `balance`, `cashback_balance`. You can include multiple with parameters.
-                filter_bys: Filter by specific fields. Supported values: `name` (partial match), `phones`, `group_id`.
-                filter_values: Filter values matching the filter_bys
+                with_: Include related data in the response. Supported values: `group`, `balance`, cashback_balance. You can include multiple with parameters.
+                filters: List of filters to apply in format {'by': 'name'|'phones'|'group_id', 'value': str}
                 headers: Headers for request
             ```
             """  # noqa: E501
@@ -619,9 +618,7 @@ class CloposClientClass(APIClient):
 
         def get_stop_list(
             self,
-            filter_bys: list[Literal['id', 'limit', 'timestamp']] = [],
-            filter_froms: list[int] = [],
-            filter_tos: list[int] = [],
+            filters: Unset[list[StopListFilter]] = UNSET,
             *,
             headers: Unset[dict[str, str]] = UNSET,
         ) -> APIResponse[ObjectListResponse[StopList]]:
@@ -639,19 +636,18 @@ class CloposClientClass(APIClient):
 
             # Or if you have set the environment variables
             CloposClient.get_stop_list(
-                filter_bys=['id', 'limit'],
-                filter_froms=[1, 0],
-                filter_tos=[100, 10],
+                filters=[
+                    {'by': 'id', 'from_': '0', 'to': '100'},
+                    {'by': 'limit', 'from_': '1', 'to': '10'},
+                ]
                 headers={'x-token': token},
-            ))  # Filter by id from 0 to 100 AND limit from 1 to 10
+            )  # Filter by id from 0 to 100 AND limit from 1 to 10
             ```
 
             **Response format: [`ObjectListResponse[StopList]`][integrify.clopos.schemas.common.response.ObjectListResponse]**
 
             Args:
-                filter_bys: Filter by: id, limit, timestamp
-                filter_froms: Filter from values
-                filter_tos: Filter to values
+                filters: List of filter options. Each filter is a dict with keys 'by', 'from_', and 'to'.
                 headers: Headers for request
             ```
             """  # noqa: E501

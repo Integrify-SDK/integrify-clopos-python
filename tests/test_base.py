@@ -72,7 +72,10 @@ def test_get_user_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
     assert isinstance(resp.body, ErrorResponse)
     assert not resp.body.success
 
-    assert resp.body.error == 'No query results for model [App\\Models\\Auth\\User] 1000'
+    assert resp.body.error[0].message == 'No query results for model [App\\Models\\Auth\\User] 1000'
+    assert resp.body.error[0].http_code == 404
+    assert resp.body.error[0].type == 'server_side'
+    assert resp.body.error[0].exception == 'NotFoundHttpException'
 
 
 @requires_env()
@@ -125,9 +128,12 @@ def test_get_customer_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
     assert not resp.body.success
 
     assert (
-        resp.body.error
+        resp.body.error[0].message
         == 'No query results for model [App\\Models\\Client\\Marketing\\Customer] 1000'
     )
+    assert resp.body.error[0].http_code == 404
+    assert resp.body.error[0].type == 'server_side'
+    assert resp.body.error[0].exception == 'NotFoundHttpException'
 
 
 @requires_env()
@@ -169,7 +175,13 @@ def test_get_category_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
     assert isinstance(resp.body, ErrorResponse)
     assert not resp.body.success
 
-    assert resp.body.error == 'No query results for model [App\\Models\\Client\\Category] 1000'
+    assert (
+        resp.body.error[0].message
+        == 'No query results for model [App\\Models\\Client\\Category] 1000'
+    )
+    assert resp.body.error[0].http_code == 404
+    assert resp.body.error[0].type == 'server_side'
+    assert resp.body.error[0].exception == 'NotFoundHttpException'
 
 
 @requires_env()
@@ -201,7 +213,13 @@ def test_get_station_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
     assert isinstance(resp.body, ErrorResponse)
     assert not resp.body.success
 
-    assert resp.body.error == 'No query results for model [App\\Models\\Client\\Station] 1000'
+    assert (
+        resp.body.error[0].message
+        == 'No query results for model [App\\Models\\Client\\Station] 1000'
+    )
+    assert resp.body.error[0].http_code == 404
+    assert resp.body.error[0].type == 'server_side'
+    assert resp.body.error[0].exception == 'NotFoundHttpException'
 
 
 @requires_env()

@@ -199,8 +199,11 @@ class Price(BaseModel):
     price: Decimal
     """Price"""
 
-    from_: int = Field(alias='from')
+    from_: UnsetOrNoneField[int] = Field(alias='from')
     """From which period"""
+
+    venue_id: UnsetOrNoneField[int]
+    """The venue ID"""
 
 
 class TimerSetting(BaseModel):

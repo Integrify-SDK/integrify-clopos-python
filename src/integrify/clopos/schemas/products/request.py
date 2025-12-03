@@ -1,4 +1,3 @@
-from itertools import zip_longest
 from typing import Literal, Union
 
 from pydantic import Field, field_serializer, model_serializer
@@ -53,7 +52,7 @@ class GetProducstRequestFilter(TypedDict):
 
 
 class GetProductsRequest(PaginatedDataRequest):
-    selects: UnsetField[Union[list[str], str]] = Field(alias='selects[]')
+    selects: UnsetField[Union[list[str], str]] = Field(serialization_alias='selects[]')
     filters: UnsetField[GetProducstRequestFilter]
 
     @field_serializer('selects')
@@ -71,7 +70,7 @@ class GetProductsRequest(PaginatedDataRequest):
             if value is not None:  # Only include non-None values
                 result[key] = [key, value]
 
-        return {'filters': result}
+        return result
 
 
 class GetProductByIDRequest(ByIDRequest):
@@ -89,26 +88,28 @@ class GetProductByIDRequest(ByIDRequest):
                 'setting',
             ]
         ]
-    ] = Field(alias='with[]')
+    ] = Field(serialization_alias='with[]')
+
+
+class StopListFilter(TypedDict):
+    by: Literal['id', 'limit', 'timestamp']
+    from_: int
+    to: NotRequired[int]
 
 
 class GetStopListRequest(PayloadBaseModel):
-    filter_bys: list[Literal['id', 'limit', 'timestamp']] = []
-    filter_froms: list[int] = []
-    filter_tos: list[int] = []
+    filters: UnsetField[list[StopListFilter]]
 
     @model_serializer
     def serialize_model(self) -> dict:
         """Model serializer"""
         data = {}
 
-        for i, (filter_name, fr, to) in enumerate(
-            zip_longest(self.filter_bys, self.filter_froms, self.filter_tos)
-        ):
-            data[f'filters[{i}][0]'] = filter_name
-            data[f'filters[{i}][1][0]'] = fr
+        for i, filter_ in enumerate(self.filters or []):
+            data[f'filters[{i}][0]'] = filter_['by']
+            data[f'filters[{i}][1][0]'] = filter_['from_']
 
-            if to:
-                data[f'filters[{i}][1][1]'] = to
+            if 'to' in filter_:
+                data[f'filters[{i}][1][1]'] = filter_['to']
 
         return data

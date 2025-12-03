@@ -28,7 +28,8 @@ repos:
         pass_filenames: false
       - id: test
         name: test
-        entry: duty test
+        files: \.py
+        entry: duty test-all-versions
         language: system
         pass_filenames: false
 

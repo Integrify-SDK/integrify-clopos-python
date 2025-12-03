@@ -1,5 +1,4 @@
 # Main aspects of Clopos: Product, Sales, Order and Receipt
-import random
 from typing import TYPE_CHECKING
 
 from pytest_mock import MockerFixture
@@ -163,7 +162,13 @@ def test_get_product_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
     assert isinstance(resp.body, ErrorResponse)
     assert not resp.body.success
 
-    assert resp.body.error == 'No query results for model [App\\Models\\Client\\Product] 1000'
+    assert (
+        resp.body.error[0].message
+        == 'No query results for model [App\\Models\\Client\\Product] 1000'
+    )
+    assert resp.body.error[0].http_code == 404
+    assert resp.body.error[0].type == 'server_side'
+    assert resp.body.error[0].exception == 'NotFoundHttpException'
 
 
 @requires_env()
@@ -187,6 +192,12 @@ def test_get_orders(authed_client: 'CloposTestClientClass'):
 
 
 @requires_env()
+def test_create_order(new_order_resp: APIResponse[ObjectResponse[Order]]):
+    assert new_order_resp.ok
+    assert isinstance(new_order_resp.body.data, Order)
+
+
+@requires_env()
 def test_get_orders_query_status(authed_client: 'CloposTestClientClass'):
     resp = authed_client.get_orders(status=OrderStatus.RECEIVED)
 
@@ -199,14 +210,14 @@ def test_get_orders_query_status(authed_client: 'CloposTestClientClass'):
 
 
 @requires_env()
-def test_get_order_by_id(authed_client: 'CloposTestClientClass'):
-    resp = authed_client.get_order_by_id(1)
+def test_get_order_by_id(authed_client: 'CloposTestClientClass', new_order_object: Order):
+    resp = authed_client.get_order_by_id(new_order_object.id)
 
     assert resp.ok
     assert resp.body.success
     assert isinstance(resp.body.data, Order)
 
-    assert resp.body.data.id == 1
+    assert resp.body.data.id == new_order_object.id
 
 
 @requires_env()
@@ -218,89 +229,29 @@ def test_get_order_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
     assert not resp.body.success
 
     assert (
-        resp.body.error
+        resp.body.error[0].message
         == 'No query results for model [App\\Models\\Client\\ServiceNotification] 1000'
     )
+    assert resp.body.error[0].http_code == 404
+    assert resp.body.error[0].type == 'server_side'
+    assert resp.body.error[0].exception == 'NotFoundHttpException'
 
 
 @requires_env()
-def test_create_order(authed_client: 'CloposTestClientClass'):
-    resp = authed_client.create_order(
-        customer_id=1,
-        payload={  # type: ignore[arg-type]
-            'service': {
-                'sale_type_id': 2,
-                'sale_type_name': 'Delivery',
-                'venue_id': 1,
-                'venue_name': 'Main',
-            },
-            'customer': {
-                'id': 9,
-                'name': 'Rahid Akhundzada',
-                'customer_discount_type': 1,
-                'phone': '+994705401040',
-            },
-            'products': [
-                {
-                    'product_id': 1,
-                    'count': 1,
-                    'product_modificators': [
-                        {'modificator_id': 187, 'count': 1},
-                        {'modificator_id': 201, 'count': 1},
-                    ],
-                    'meta': {
-                        'price': 0,
-                        'order_product': {
-                            'product': {
-                                'id': 1,
-                                'name': 'Mega Dürüm Menü Alana Çiğ Köfte Dürüm',
-                                'category_id': 1,
-                                'station_id': 1,
-                                'price': 0,
-                            },
-                            'count': 1,
-                            'status': 'completed',
-                            'product_modificators': [
-                                {'modificator_id': 187, 'count': 1},
-                                {'modificator_id': 201, 'count': 1},
-                            ],
-                            'product_hash': 'MTExODcsMTEyMDE=',
-                        },
-                    },
-                }
-            ],
-        },
-        meta={
-            'comment': '',
-            'discount': {'discount_type': 1, 'discount_value': 10},
-            'orderTotal': '16.2000',
-            'apply_service_charge': True,
-            'customer_discount_type': 1,
-            'service_charge_value': 0,
-        },
-    )
-
-    assert resp.ok
-    assert isinstance(resp.body.data, Order)
-
-
-@requires_env()
-def test_update_order(authed_client: 'CloposTestClientClass'):
-    resp = authed_client.get_order_by_id(1)
+def test_update_order(authed_client: 'CloposTestClientClass', new_order_object: Order):
+    resp = authed_client.get_order_by_id(new_order_object.id)
 
     assert resp.ok
 
-    new_status = random.choice([s for s in OrderStatus if s != resp.body.data.status])
-
-    resp = authed_client.update_order(1, status=new_status)
+    resp = authed_client.update_order(id=new_order_object.id, status=OrderStatus.READY)
 
     assert resp.ok
-    assert resp.body.data.status == new_status
+    assert resp.body.data.status == OrderStatus.READY
 
-    resp = authed_client.get_order_by_id(1)
+    resp = authed_client.get_order_by_id(new_order_object.id)
 
     assert resp.ok
-    assert resp.body.data.status == new_status
+    assert resp.body.data.status == OrderStatus.READY
 
 
 @requires_env()
@@ -321,7 +272,13 @@ def test_get_receipt_by_id_wrong_id(authed_client: 'CloposTestClientClass'):
     assert isinstance(resp.body, ErrorResponse)
     assert not resp.body.success
 
-    assert resp.body.error == 'No query results for model [App\\Models\\Client\\Receipt] 1000000000'
+    assert (
+        resp.body.error[0].message
+        == 'No query results for model [App\\Models\\Client\\Receipt] 1000000000'
+    )
+    assert resp.body.error[0].http_code == 404
+    assert resp.body.error[0].type == 'server_side'
+    assert resp.body.error[0].exception == 'NotFoundHttpException'
 
 
 @requires_env()

@@ -14,6 +14,7 @@ actions = \
 	format \
 	lint \
 	type-check \
+	test-all-versions \
 	test \
 	coverage \
 	docs \

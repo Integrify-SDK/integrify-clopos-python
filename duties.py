@@ -6,7 +6,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
-from duty import context, duty
+from duty import duty
+from duty._internal import context
 
 PYTHON_VERSIONS = os.getenv('PYTHON_VERSIONS', '3.9 3.10 3.11 3.12 3.13').split()
 
@@ -98,18 +99,36 @@ def type_check(ctx: context.Context, *files):
 
 @duty
 def test(ctx: context.Context, live: bool = False):
+    """Run tests on a single file."""
+    ctx.run(
+        (
+            'uv run --active --no-sync coverage run  -m pytest -sv --durations=10'
+            f'{" --live" if live else ""}'
+        ),
+        title='Running test',
+    )
+
+
+@duty
+def test_all_versions(ctx: context.Context, live: bool = False):
     """Run tests with local environment"""
     for ver in PYTHON_VERSIONS:
         venv_path = Path(f'.venvs{SEP}{ver}')
 
-        with environ(VIRTUAL_ENV=str(venv_path)):
-            ctx.run(
-                'uv run --active --no-sync coverage run --data-file=coverage/.coverage.py'
-                + ver
-                + ' -m pytest -sv --durations=10 '
-                + ('--live' if live else ''),
-                title=f'Running tests (python {ver})',
-            )
+        if sys.platform == 'win32':
+            activate_cmd = f'{venv_path}\\Scripts\\activate.bat && '
+        else:
+            activate_cmd = f'source {venv_path}/bin/activate && '
+
+        # PPrint python environment with uv
+        ctx.run(
+            (
+                f'{activate_cmd}uv run --active --no-sync '
+                f'coverage run --data-file=coverage/.coverage.py{ver}'
+                f' -m pytest -sv --durations=10 {" --live" if live else ""}'
+            ),
+            title=f'Running tests (python {ver})',
+        )
 
 
 @duty
