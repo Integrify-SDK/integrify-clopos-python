@@ -115,7 +115,7 @@ ignore-paths = ['tests/', '.venv/', '.venvs/', 'test.py']
 disable = ['C0114', 'C0115', 'C0301', 'R0913', 'R0914', 'R0917', 'R0801']
 
 [tool.mypy]
-exclude = ['tests/*', 'test.py']
+exclude = ['test.py']
 plugins = ['pydantic.mypy']
 mypy_path = "src"
 namespace_packages = true

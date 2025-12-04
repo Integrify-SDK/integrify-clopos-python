@@ -51,14 +51,16 @@ class AuthHandler(APIPayloadHandler):
         resp_model=Annotated[Union[AuthResponse, ErrorResponse], Field(discriminator='success')],
         dry=False,
     ):
-        super().__init__(req_model, resp_model, dry)
+        super().__init__(req_model, resp_model, dry)  # ty: ignore[invalid-argument-type]
 
 
 class AuthedAPIPayloadHandler(APIPayloadHandler):
     def __init__(self, req_model=None, resp_model=None, dry=False):
         super().__init__(
             req_model,
-            Annotated[Union[resp_model, ErrorResponse], Field(discriminator='success')],
+            Annotated[
+                Union[resp_model, ErrorResponse], Field(discriminator='success')
+            ],  # ty: ignore[invalid-argument-type]
             dry,
         )
 

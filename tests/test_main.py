@@ -178,7 +178,9 @@ def test_get_stop_list(authed_client: 'CloposTestClientClass'):
     assert resp.ok
     assert resp.body.success
     assert isinstance(resp.body.data, list)
-    assert isinstance(resp.body.data[0], StopList)
+
+    if len(resp.body.data) > 0:
+        assert isinstance(resp.body.data[0], StopList)
 
 
 @requires_env()

@@ -51,5 +51,5 @@ class Errors(BaseModel):
 
 class ErrorResponse(BaseModel):
     success: Literal[False]
-    error: Optional[list[Errors]] = None
+    error: list[Errors] = []
     message: Optional[str] = None
