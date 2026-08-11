@@ -46,7 +46,7 @@ Documentation = "https://integrify.mmzeynalli.dev/integrations/clopos/about"
 gh = [
     "pytest>=8.1.1,<9",
     "pytest-mock>=3.14.0,<4",
-    "smokeshow>=0.4.0,<0.5",
+    "smokeshow>=0.4.0,<0.6",
     "coverage>=7.6.3,<8",
     "duty>=1.5.0",
 ]
