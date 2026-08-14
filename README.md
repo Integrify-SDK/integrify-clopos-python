@@ -1,3 +1,5 @@
+# THIS PROJECT IS ARCHIVED. EVERYTHING IS MOVED TO [THIS REPO](https://github.com/integrify-sdk/integrify-python)
+
 # Integrify Clopos
 
 > [!Caution]
